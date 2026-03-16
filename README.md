@@ -2,7 +2,7 @@
 
 Steel industry calculator for sheet weight/cost, coil metrics, and scrap calculations. Migrated from Python to Rust for improved performance and type safety.
 
-Version 0.1.3 · Copyright (c) Harbor Pipe & Steel Inc.
+Version 0.1.4 · Copyright (c) Harbor Pipe & Steel Inc.
 
 ## Features
 
