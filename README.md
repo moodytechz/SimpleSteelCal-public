@@ -76,6 +76,11 @@ Code in this repository is available under the MIT License. See `LICENSE`.
 Branding assets such as logos and splash screens remain subject to the notice
 in `NOTICE`.
 
+## Contributing
+
+Contributions are welcome. See `CONTRIBUTING.md` for setup, testing, and pull
+request guidance.
+
 ## CLI Usage
 
 The CLI binary is `steelcal-cli`.
