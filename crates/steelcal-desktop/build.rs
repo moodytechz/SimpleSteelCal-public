@@ -6,7 +6,6 @@ fn main() {
     #[cfg(target_os = "windows")]
     {
         let mut res = winresource::WindowsResource::new();
-        res.set_icon("../../logo.ico");
         res.set("ProductName", "Simple Steel Calculator");
         res.set("FileDescription", "Simple Steel Calculator");
         res.set("CompanyName", "Harbor Pipe & Steel Inc.");

@@ -36,13 +36,13 @@
 
 ## Area: PE Metadata (PE)
 
-### VAL-PE-001: Windows executable displays correct icon in Explorer
+### VAL-PE-001: Windows executable builds without repository-local logo assets
 
-**Behavior:** The built `SimpleSteelCalculator.exe` displays the Harbor Pipe & Steel logo icon (from `logo.ico`) when viewed in Windows Explorer, rather than the generic Rust/Windows default icon.
+**Behavior:** The built `SimpleSteelCalculator.exe` does not require repository-local logo assets such as `logo.ico` or `Harbor_logo_hr.png` to compile successfully.
 
-**Pass condition:** Build the desktop crate in release mode. Navigate to `target\release\` in Windows Explorer. The `SimpleSteelCalculator.exe` file shows the custom Harbor logo icon in all Explorer view modes (details, tiles, large icons).
+**Pass condition:** Build the desktop crate in release mode after removing repository-local logo assets. The build completes successfully and produces `SimpleSteelCalculator.exe`.
 
-**Evidence:** Visual inspection of the exe file in Explorer. Optionally, use a PE resource viewer (e.g., Resource Hacker) to confirm the icon resource is embedded.
+**Evidence:** `cargo build --release -p steelcal-desktop` succeeds in a clean checkout that does not include the removed logo files.
 
 ---
 

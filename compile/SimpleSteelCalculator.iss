@@ -11,7 +11,6 @@
 #define MyAppURL "https://www.harborpipe.com/"
 #define MyAppExeName "SimpleSteelCalculator.exe"
 #define MyAppSetupName "SimpleSteelCalculator-" + MyAppVersion + "-x64-Setup"
-#define MyAppIcon "..\logo.ico"
 #define SignToolArgs GetEnv("STEELCAL_SIGN_ARGS")
 
 #if SignToolArgs != ""
@@ -40,7 +39,6 @@ SolidCompression=yes
 WizardStyle=modern
 OutputDir=Output
 OutputBaseFilename={#MyAppSetupName}
-SetupIconFile={#MyAppIcon}
 VersionInfoVersion={#MyAppVersion}
 VersionInfoCompany={#MyAppPublisher}
 VersionInfoDescription={#MyAppName} Installer

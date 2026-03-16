@@ -89,7 +89,7 @@ sudo update-desktop-database || true
 ## Notes
 - Linux uses the in-app Tk splash fallback rather than the Windows bootloader splash.
 - Writable configuration is stored under `~/.SimpleSteelCalculator/steel_calc_config.json`. On first launch, a legacy sidecar `steel_calc_config.json` next to the binary is imported into that folder once.
-- Data files included in the build: `Harbor_logo_hr.png`, `Harbor_splash.png`, `logo.ico`, `lbs_ft_table.xlsx`, and `steel_calc_config.json`.
+- Data files included in the build: `lbs_ft_table.xlsx` and `steel_calc_config.json`.
 - To override gauge tables, place `lbs_ft_table.xlsx` next to the installed binary.
 - If you see a blank window on Wayland, try launching with `XDG_SESSION_TYPE=x11`. Most DEs work out-of-the-box.
 

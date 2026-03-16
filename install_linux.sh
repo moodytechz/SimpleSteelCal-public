@@ -8,8 +8,6 @@ BIN_NAME="simple-steel-calculator"
 DIST_DIR="dist/linux"
 MODE_FILE="$DIST_DIR/$APP_NAME"
 MODE_DIR="$DIST_DIR/$APP_NAME/$APP_NAME"
-ICON_SRC="Harbor_logo_hr.png"
-ICON_PNG="$HOME/.local/share/icons/simple-steel-calculator.png"
 DESKTOP_FILE="$HOME/.local/share/applications/simple-steel-calculator.desktop"
 TARGET_DIR="$HOME/.local/opt/simple-steel-calculator"
 TARGET_BIN="$HOME/.local/bin/$BIN_NAME"
@@ -19,7 +17,6 @@ if [[ ${1:-} == "--system" ]]; then
   SYSTEM_INSTALL=true
   TARGET_DIR="/opt/simple-steel-calculator"
   TARGET_BIN="/usr/local/bin/$BIN_NAME"
-  ICON_PNG="/usr/share/icons/hicolor/256x256/apps/simple-steel-calculator.png"
   DESKTOP_FILE="/usr/share/applications/simple-steel-calculator.desktop"
 fi
 
@@ -61,13 +58,6 @@ else
   ln -sf "$LAUNCH_CMD" "$TARGET_BIN"
 fi
 
-# Install icon
-if $SYSTEM_INSTALL; then
-  sudo_cmd install -D -m 644 "$ICON_SRC" "$ICON_PNG"
-else
-  install -D -m 644 "$ICON_SRC" "$ICON_PNG"
-fi
-
 # Create .desktop entry
 TMP_DESKTOP=$(mktemp)
 cat > "$TMP_DESKTOP" <<EOF
@@ -77,7 +67,6 @@ Version=1.0
 Name=Simple Steel Calculator
 Comment=Sheet, coil, and costing calculator for steel
 Exec=$TARGET_BIN
-Icon=$ICON_PNG
 Terminal=false
 Categories=Office;Engineering;
 Keywords=steel;calculator;coil;sheet;scrap;weight;quote;
