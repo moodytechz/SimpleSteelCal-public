@@ -50,4 +50,4 @@ Workflow behavior:
 
 - Linux archives include `install_linux.sh` so the extracted bundle can be installed locally.
 - macOS releases are currently unsigned portable archives rather than notarized `.app` bundles or `.dmg` files.
-- Asset names use the stripped tag version, for example `v0.1.4` becomes `0.1.4`.
+- Asset names use the stripped tag version, for example `v0.1.5` becomes `0.1.5`.
