@@ -73,9 +73,11 @@ cp "$README_FILE" "$BUNDLE_DIR/"
 cp "$REPO_ROOT/LICENSE" "$BUNDLE_DIR/"
 cp "$REPO_ROOT/NOTICE" "$BUNDLE_DIR/"
 
-for file in "${EXTRA_FILES[@]}"; do
-    cp "$file" "$BUNDLE_DIR/"
-done
+if [[ ${#EXTRA_FILES[@]} -gt 0 ]]; then
+    for file in "${EXTRA_FILES[@]}"; do
+        cp "$file" "$BUNDLE_DIR/"
+    done
+fi
 
 tar -C "$STAGE_DIR" -czf "$ARCHIVE_PATH" "$BUNDLE_NAME"
 
