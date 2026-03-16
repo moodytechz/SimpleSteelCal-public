@@ -18,8 +18,9 @@ jobs:
           GH_TOKEN: ${{ github.token }}
         run: |
           tag="${GITHUB_REF_NAME}"
-          if ! gh release view "$tag" >/dev/null 2>&1; then
-            gh release create "$tag" --title "$tag" --generate-notes
+          repo="${GITHUB_REPOSITORY}"
+          if ! gh release view "$tag" -R "$repo" >/dev/null 2>&1; then
+            gh release create "$tag" -R "$repo" --title "$tag" --generate-notes
           fi
 
   build-windows:
@@ -62,12 +63,13 @@ jobs:
         run: |
           $tag = "${{ github.ref_name }}"
           $version = $tag -replace '^v', ''
+          $repo = "${{ github.repository }}"
           $installer = Get-ChildItem "compile/Output/*.exe" | Select-Object -First 1
           if (-not $installer) {
             throw "Installer not found under compile/Output"
           }
           $portableZip = Get-Item "dist/windows/SimpleSteelCalculator-$version-portable.zip"
-          gh release upload $tag $installer.FullName $portableZip.FullName --clobber
+          gh release upload $tag $installer.FullName $portableZip.FullName --clobber --repo $repo
 
   build-linux:
     needs: create-release
@@ -98,10 +100,11 @@ jobs:
           GH_TOKEN: ${{ github.token }}
         run: |
           tag="${GITHUB_REF_NAME}"
+          repo="${GITHUB_REPOSITORY}"
           version="${tag#v}"
           arch="$(uname -m)"
           archive="dist/linux/SimpleSteelCalculator-${version}-linux-${arch}.tar.gz"
-          gh release upload "$tag" "$archive" --clobber
+          gh release upload "$tag" "$archive" --clobber --repo "$repo"
 
   build-macos:
     needs: create-release
@@ -127,7 +130,8 @@ jobs:
           GH_TOKEN: ${{ github.token }}
         run: |
           tag="${GITHUB_REF_NAME}"
+          repo="${GITHUB_REPOSITORY}"
           version="${tag#v}"
           arch="$(uname -m)"
           archive="dist/macos/SimpleSteelCalculator-${version}-macos-${arch}.tar.gz"
-          gh release upload "$tag" "$archive" --clobber
+          gh release upload "$tag" "$archive" --clobber --repo "$repo"
