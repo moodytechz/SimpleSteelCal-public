@@ -1,0 +1,17 @@
+{
+  "job_type": "coil",
+  "jobs": [
+    {
+      "coil_width": 48,
+      "coil_thickness": 0.06,
+      "coil_id": 20,
+      "coil_weight": 2000
+    },
+    {
+      "coil_width": 36,
+      "coil_thickness": 0.048,
+      "coil_id": 24,
+      "coil_weight": 1500
+    }
+  ]
+}

@@ -1,0 +1,23 @@
+[workspace]
+members = [
+  "crates/steelcal-core",
+  "crates/steelcal-cli",
+  "crates/steelcal-desktop",
+]
+resolver = "2"
+
+[workspace.package]
+edition = "2021"
+publish = false
+version = "0.1.2"
+
+[workspace.dependencies]
+anyhow = "1.0.102"
+clap = { version = "4.6.0", features = ["derive"] }
+directories = "6.0.0"
+log = "0.4"
+serde = { version = "1.0.228", features = ["derive"] }
+serde_json = "1.0.149"
+slint = "1.15.1"
+slint-build = "1.15.1"
+thiserror = "2.0.18"

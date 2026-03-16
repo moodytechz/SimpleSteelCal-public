@@ -1,0 +1,8 @@
+{
+  "default_gauge": "16",
+  "default_table": "HR/HRPO/CR",
+  "density_lb_ft3": 490.0,
+  "ui_font_size": 12,
+  "ui_heading_delta": 3,
+  "ui_scaling": 0.0
+}

@@ -1,0 +1,321 @@
+// ---------------------------------------------------------------------------
+// CoilPanel – coil calculation workflow component
+// ---------------------------------------------------------------------------
+
+import { LineEdit, Button, GroupBox } from "std-widgets.slint";
+import { Theme } from "theme.slint";
+import { Tooltip } from "tooltip.slint";
+
+export component CoilPanel inherits VerticalLayout {
+    spacing: Theme.spacing-md;
+
+    // -----------------------------------------------------------------------
+    // Properties bound from Rust
+    // -----------------------------------------------------------------------
+
+    // Input fields
+    in-out property <string> coil-width-text: "";
+    in-out property <string> coil-thickness-text: "";
+    in-out property <string> coil-id-text: "";
+    in-out property <string> coil-weight-text: "";
+    in-out property <string> coil-density-text: "";
+
+    // Coil results
+    in property <string> result-footage: "";
+    in property <string> result-piw: "";
+    in property <string> result-od: "";
+
+    // Error message
+    in property <string> coil-error-message: "";
+
+    // Callbacks
+    callback calculate-coil();
+    callback clear-coil();
+    callback advance-focus();
+
+    // -----------------------------------------------------------------------
+    // Coil Calculation Section
+    // -----------------------------------------------------------------------
+
+    GroupBox {
+        title: "Coil Calculation";
+
+        VerticalLayout {
+            spacing: Theme.spacing-sm;
+            padding: Theme.spacing-sm;
+
+            // -- First row: Width, Thickness, ID --
+            HorizontalLayout {
+                spacing: 14px;
+                alignment: start;
+
+                Tooltip {
+                    tooltip-text: "Enter coil width in inches";
+                    Rectangle {
+                        width: 160px;
+                        height: 56px;
+                        background: transparent;
+
+                        VerticalLayout {
+                            spacing: 4px;
+
+                            Text {
+                                text: "Coil Width (in)";
+                                font-size: 12px;
+                                color: Theme.text-secondary;
+                                accessible-role: text;
+                                accessible-label: "Coil width in inches";
+                            }
+                            coil-width-input := LineEdit {
+                                text <=> root.coil-width-text;
+                                placeholder-text: "e.g. 48";
+                                height: 34px;
+                                horizontal-stretch: 1;
+                                accessible-label: "Coil width input";
+                                key-pressed(event) => {
+                                    if (!event.modifiers.control && !event.modifiers.shift && event.text == Key.Return) {
+                                        root.advance-focus();
+                                        return accept;
+                                    }
+                                    return reject;
+                                }
+                            }
+                        }
+                    }
+                }
+
+                Tooltip {
+                    tooltip-text: "Enter coil material thickness in inches";
+                    Rectangle {
+                        width: 160px;
+                        height: 56px;
+                        background: transparent;
+
+                        VerticalLayout {
+                            spacing: 4px;
+
+                            Text {
+                                text: "Thickness (in)";
+                                font-size: 12px;
+                                color: Theme.text-secondary;
+                                accessible-role: text;
+                                accessible-label: "Coil thickness in inches";
+                            }
+                            coil-thickness-input := LineEdit {
+                                text <=> root.coil-thickness-text;
+                                placeholder-text: "e.g. 0.0598";
+                                height: 34px;
+                                horizontal-stretch: 1;
+                                accessible-label: "Coil thickness input";
+                                key-pressed(event) => {
+                                    if (!event.modifiers.control && !event.modifiers.shift && event.text == Key.Return) {
+                                        root.advance-focus();
+                                        return accept;
+                                    }
+                                    return reject;
+                                }
+                            }
+                        }
+                    }
+                }
+
+                Tooltip {
+                    tooltip-text: "Enter coil inner diameter in inches (required for OD calculation)";
+                    Rectangle {
+                        width: 160px;
+                        height: 56px;
+                        background: transparent;
+
+                        VerticalLayout {
+                            spacing: 4px;
+
+                            Text {
+                                text: "Inner Diameter (in)";
+                                font-size: 12px;
+                                color: Theme.text-secondary;
+                                accessible-role: text;
+                                accessible-label: "Coil inner diameter in inches";
+                            }
+                            coil-id-input := LineEdit {
+                                text <=> root.coil-id-text;
+                                placeholder-text: "e.g. 24";
+                                height: 34px;
+                                horizontal-stretch: 1;
+                                accessible-label: "Coil inner diameter input";
+                                key-pressed(event) => {
+                                    if (!event.modifiers.control && !event.modifiers.shift && event.text == Key.Return) {
+                                        root.advance-focus();
+                                        return accept;
+                                    }
+                                    return reject;
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+
+            // -- Second row: Weight, Density --
+            HorizontalLayout {
+                spacing: 14px;
+                alignment: start;
+
+                Tooltip {
+                    tooltip-text: "Enter total coil weight in pounds";
+                    Rectangle {
+                        width: 160px;
+                        height: 56px;
+                        background: transparent;
+
+                        VerticalLayout {
+                            spacing: 4px;
+
+                            Text {
+                                text: "Weight (lb)";
+                                font-size: 12px;
+                                color: Theme.text-secondary;
+                                accessible-role: text;
+                                accessible-label: "Coil weight in pounds";
+                            }
+                            coil-weight-input := LineEdit {
+                                text <=> root.coil-weight-text;
+                                placeholder-text: "e.g. 10000";
+                                height: 34px;
+                                horizontal-stretch: 1;
+                                accessible-label: "Coil weight input";
+                                key-pressed(event) => {
+                                    if (!event.modifiers.control && !event.modifiers.shift && event.text == Key.Return) {
+                                        root.advance-focus();
+                                        return accept;
+                                    }
+                                    return reject;
+                                }
+                            }
+                        }
+                    }
+                }
+
+                Tooltip {
+                    tooltip-text: "Enter steel density in lb/ft³ (default: 490.0 for carbon steel)";
+                    Rectangle {
+                        width: 160px;
+                        height: 56px;
+                        background: transparent;
+
+                        VerticalLayout {
+                            spacing: 4px;
+
+                            Text {
+                                text: "Density (lb/ft³)";
+                                font-size: 12px;
+                                color: Theme.text-secondary;
+                                accessible-role: text;
+                                accessible-label: "Steel density in pounds per cubic foot";
+                            }
+                            coil-density-input := LineEdit {
+                                text <=> root.coil-density-text;
+                                placeholder-text: "490.0";
+                                height: 34px;
+                                horizontal-stretch: 1;
+                                accessible-label: "Coil density input";
+                                key-pressed(event) => {
+                                    if (!event.modifiers.control && !event.modifiers.shift && event.text == Key.Return) {
+                                        root.advance-focus();
+                                        return accept;
+                                    }
+                                    return reject;
+                                }
+                            }
+                        }
+                    }
+                }
+
+                Rectangle {
+                    width: 160px;
+                    height: 56px;
+                    background: transparent;
+                }
+            }
+
+            // -- Calculate + Clear Buttons --
+            HorizontalLayout {
+                alignment: start;
+                spacing: 6px;
+                padding-top: Theme.spacing-sm;
+
+                coil-calc-btn := Button {
+                    text: "Calculate";
+                    primary: true;
+                    width: 96px;
+                    height: 34px;
+                    accessible-label: "Calculate coil properties";
+                    clicked => {
+                        root.calculate-coil();
+                    }
+                }
+
+                clear-coil-btn := Button {
+                    text: "Clear";
+                    width: 64px;
+                    height: 34px;
+                    accessible-label: "Clear all coil fields";
+                    clicked => {
+                        root.clear-coil();
+                    }
+                }
+            }
+
+            // -- Error display --
+            if root.coil-error-message != "" : Rectangle {
+                background: #fdf0ef;
+                border-radius: Theme.border-radius;
+                border-width: 1px;
+                border-color: Theme.error;
+
+                VerticalLayout {
+                    padding: Theme.spacing-sm;
+
+                    coil-error-text := Text {
+                        text: root.coil-error-message;
+                        font-size: 12px;
+                        color: Theme.error;
+                        wrap: word-wrap;
+                        accessible-role: text;
+                        accessible-label: "Error: " + root.coil-error-message;
+                    }
+                }
+            }
+
+            // -- Results display --
+            if root.result-footage != "" : Rectangle {
+                background: Theme.surface;
+                border-radius: Theme.border-radius;
+                border-width: 1px;
+                border-color: Theme.border;
+
+                coil-results-layout := GridLayout {
+                    spacing: 6px;
+                    padding: Theme.spacing-sm;
+
+                    Row {
+                        Text { text: "Footage (ft):"; font-size: 12px; color: Theme.text-secondary; horizontal-alignment: right; }
+                        Text { text: root.result-footage; font-size: 12px; font-weight: 600; color: Theme.text-primary; }
+                    }
+                    Row {
+                        Text { text: "PIW (lb/in):"; font-size: 12px; color: Theme.text-secondary; horizontal-alignment: right; }
+                        Text { text: root.result-piw; font-size: 12px; font-weight: 600; color: Theme.text-primary; }
+                    }
+                    Row {
+                        Text { text: "OD (in):"; font-size: 12px; color: Theme.text-secondary; horizontal-alignment: right; }
+                        Text { text: root.result-od; font-size: 12px; font-weight: 600; color: Theme.text-primary; }
+                    }
+                }
+            }
+
+            Rectangle {
+                vertical-stretch: 1;
+                background: transparent;
+            }
+        }
+    }
+}

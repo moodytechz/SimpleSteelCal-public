@@ -1,0 +1,57 @@
+name: ci
+
+on:
+  push:
+  pull_request:
+
+jobs:
+  rust:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v5
+
+      - name: Install stable Rust
+        uses: dtolnay/rust-toolchain@stable
+
+      - name: Install Linux desktop dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y libfontconfig1-dev
+
+      - name: Build workspace
+        run: cargo build --workspace
+
+      - name: Test core crate
+        run: cargo test -p steelcal-core
+
+      - name: Test CLI crate
+        run: cargo test -p steelcal-cli
+
+      - name: Test desktop crate
+        run: cargo test -p steelcal-desktop
+
+      - name: Smoke test CLI JSON output
+        run: cargo run -p steelcal-cli -- --width 48 --length 96 --gauge 16 --json
+
+      - name: Smoke test batch CLI JSON output
+        run: cargo run -p steelcal-cli -- --input-file fixtures/batch/sheet-batch-happy-path.json --json
+
+      - name: Smoke test batch CLI CSV output
+        run: cargo run -p steelcal-cli -- --input-file fixtures/batch/sheet-batch-happy-path.csv --json
+
+      - name: Smoke test batch CLI CSV partial success output
+        run: cargo run -p steelcal-cli -- --input-file fixtures/batch/sheet-batch-invalid-row.csv --json
+
+      - name: Smoke test batch CLI export output
+        run: |
+          tmp="$(mktemp)"
+          cargo run -p steelcal-cli -- --input-file fixtures/batch/sheet-batch-invalid-row.csv --json --output-file "$tmp"
+          test -s "$tmp"
+          grep -q "1,36,120,abc" "$tmp"
+
+      - name: Smoke test coil batch CLI JSON output
+        run: cargo run -p steelcal-cli -- --input-file fixtures/batch/coil-batch-happy-path.json --json
+
+      - name: Smoke test scrap batch CLI JSON output
+        run: cargo run -p steelcal-cli -- --input-file fixtures/batch/scrap-batch-happy-path.json --json

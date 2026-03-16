@@ -1,0 +1,31 @@
+# Rust build output
+target/
+
+# Python virtual environment / local env files
+.venv/
+.env
+.env.*
+
+# Distribution / build outputs
+dist/
+build/
+compile/Output/
+
+# Python bytecode
+__pycache__/
+*.pyc
+
+# Windows executables
+*.exe
+
+# Editor / local workspace state
+.idea/
+.vscode/
+*.code-workspace
+
+# Internal or non-public project artifacts
+.factory/
+.rmv/
+bkup/
+docs/superpowers/
+steelcal-rust-migration-plan.md

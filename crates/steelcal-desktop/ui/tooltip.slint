@@ -1,0 +1,14 @@
+// ---------------------------------------------------------------------------
+// Tooltip – temporary pass-through wrapper
+// ---------------------------------------------------------------------------
+// The original hover-overlay implementation can recurse during startup layout
+// and overflow the stack on Windows. Keep the wrapper component so panel
+// layout stays unchanged, but defer the actual tooltip behavior until the
+// layout cycle is stabilized.
+// ---------------------------------------------------------------------------
+
+export component Tooltip inherits VerticalLayout {
+    in property <string> tooltip-text: "";
+
+    @children
+}

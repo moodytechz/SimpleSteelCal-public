@@ -1,0 +1,294 @@
+[
+  {
+    "name": "sheet-gauge",
+    "description": "Sheet calculation using gauge lookup (HR/HRPO/CR gauge 16)",
+    "args": ["--width", "48", "--length", "120", "--qty", "10", "--gauge", "16", "--table", "HR/HRPO/CR", "--json"],
+    "returncode": 0,
+    "expected_json": {
+      "sheet": {
+        "each_lb": 100.0,
+        "total_lb": 1000.0,
+        "psf": 2.5,
+        "area_ft2_each": 40.0,
+        "area_ft2_total": 400.0,
+        "used_key": "16"
+      }
+    }
+  },
+  {
+    "name": "sheet-psf",
+    "description": "Sheet calculation using direct PSF input",
+    "args": ["--width", "48", "--length", "96", "--qty", "1", "--psf", "3.5", "--json"],
+    "returncode": 0,
+    "expected_json": {
+      "sheet": {
+        "each_lb": 112.0,
+        "total_lb": 112.0,
+        "psf": 3.5,
+        "area_ft2_each": 32.0,
+        "area_ft2_total": 32.0,
+        "used_key": null
+      }
+    }
+  },
+  {
+    "name": "sheet-thickness",
+    "description": "Sheet calculation using thickness with explicit density",
+    "args": ["--width", "48", "--length", "96", "--qty", "1", "--thickness", "0.25", "--density", "490", "--json"],
+    "returncode": 0,
+    "expected_json": {
+      "sheet": {
+        "each_lb": 326.667,
+        "area_ft2_each": 32.0,
+        "area_ft2_total": 32.0,
+        "used_key": null
+      }
+    }
+  },
+  {
+    "name": "coil",
+    "description": "Coil calculation with sheet + coil args",
+    "args": ["--width", "48", "--length", "96", "--qty", "1", "--gauge", "16", "--coil-width", "48", "--coil-thickness", "0.06", "--coil-id", "20", "--coil-weight", "2000", "--json"],
+    "returncode": 0,
+    "expected_json": {
+      "coil": {
+        "coil_footage_ft": 204.08163265306123,
+        "coil_piw_lb_per_in": 41.666666666666664
+      },
+      "sheet": {
+        "each_lb": 80.0,
+        "psf": 2.5,
+        "used_key": "16"
+      }
+    }
+  },
+  {
+    "name": "scrap",
+    "description": "Scrap calculation (scrap_actual > scrap_ending, not pickup)",
+    "args": ["--scrap-actual", "5000", "--scrap-ending", "4800", "--scrap-base-cost", "0.35", "--scrap-processing-cost", "0.05", "--json"],
+    "returncode": 0,
+    "expected_json": {
+      "scrap": {
+        "scrap_lb": 200.0,
+        "total_cost": 2000.0,
+        "price_per_lb": 0.4167,
+        "is_pickup": false
+      }
+    }
+  },
+  {
+    "name": "pickup",
+    "description": "Scrap calculation where ending > actual (pickup scenario)",
+    "args": ["--scrap-actual", "4500", "--scrap-ending", "5000", "--scrap-base-cost", "0.35", "--scrap-processing-cost", "0.05", "--json"],
+    "returncode": 0,
+    "expected_json": {
+      "scrap": {
+        "scrap_lb": -500.0,
+        "total_cost": 1800.0,
+        "price_per_lb": 0.36,
+        "is_pickup": true
+      }
+    }
+  },
+  {
+    "name": "minimum-order",
+    "description": "Sheet + pricing with minimum order applied",
+    "args": ["--width", "36", "--length", "72", "--qty", "5", "--gauge", "20", "--price-mode", "per-lb", "--price", "0.85", "--markup", "10", "--tax", "8.25", "--setup-fee", "50", "--min-order", "200", "--json"],
+    "returncode": 0,
+    "expected_json": {
+      "costs": {
+        "minimum_applied": true,
+        "total_before_tax": 200.0,
+        "total_after_tax": 216.5
+      },
+      "sheet": {
+        "each_lb": 27.0,
+        "psf": 1.5,
+        "used_key": "20"
+      }
+    }
+  },
+  {
+    "name": "batch-sheet-happy-path",
+    "description": "Batch JSON input with two valid sheet jobs",
+    "args": ["--input-file", "@ROOT@/fixtures/batch/sheet-batch-happy-path.json", "--json"],
+    "returncode": 0,
+    "expected_json": {
+      "results": [
+        {
+          "row_index": 0,
+          "sheet": {
+            "each_lb": 80.0,
+            "total_lb": 80.0,
+            "psf": 2.5,
+            "used_key": "16"
+          }
+        },
+        {
+          "row_index": 1,
+          "sheet": {
+            "each_lb": 82.5,
+            "total_lb": 165.0,
+            "psf": 2.75,
+            "used_key": null
+          }
+        }
+      ],
+      "errors": []
+    }
+  },
+  {
+    "name": "batch-sheet-partial-success",
+    "description": "Batch JSON input reports row-level errors without discarding valid rows",
+    "args": ["--input-file", "@ROOT@/fixtures/batch/sheet-batch-invalid-row.json", "--json"],
+    "returncode": 0,
+    "expected_json": {
+      "results": [
+        {
+          "row_index": 0,
+          "sheet": {
+            "each_lb": 80.0,
+            "total_lb": 80.0,
+            "psf": 2.5,
+            "used_key": "16"
+          }
+        }
+      ],
+      "errors": [
+        {
+          "row_index": 1,
+          "message": "length is required"
+        }
+      ]
+    }
+  },
+  {
+    "name": "batch-sheet-csv-happy-path",
+    "description": "Batch CSV input with two valid sheet jobs",
+    "args": ["--input-file", "@ROOT@/fixtures/batch/sheet-batch-happy-path.csv", "--json"],
+    "returncode": 0,
+    "expected_json": {
+      "results": [
+        {
+          "row_index": 0,
+          "sheet": {
+            "each_lb": 80.0,
+            "total_lb": 80.0,
+            "psf": 2.5,
+            "used_key": "16"
+          }
+        },
+        {
+          "row_index": 1,
+          "sheet": {
+            "each_lb": 82.5,
+            "total_lb": 165.0,
+            "psf": 2.75,
+            "used_key": null
+          }
+        }
+      ],
+      "errors": []
+    }
+  },
+  {
+    "name": "batch-sheet-csv-partial-success",
+    "description": "Batch CSV input reports row-level parse errors without discarding valid rows",
+    "args": ["--input-file", "@ROOT@/fixtures/batch/sheet-batch-invalid-row.csv", "--json"],
+    "returncode": 0,
+    "expected_json": {
+      "results": [
+        {
+          "row_index": 0,
+          "sheet": {
+            "each_lb": 80.0,
+            "total_lb": 80.0,
+            "psf": 2.5,
+            "used_key": null
+          }
+        }
+      ],
+      "errors": [
+        {
+          "row_index": 1,
+          "message": "invalid value for 'qty': 'abc'"
+        }
+      ]
+    }
+  },
+  {
+    "name": "batch-coil-happy-path",
+    "description": "Batch JSON input with two valid coil jobs",
+    "args": ["--input-file", "@ROOT@/fixtures/batch/coil-batch-happy-path.json", "--json"],
+    "returncode": 0,
+    "expected_json": {
+      "results": [
+        {
+          "row_index": 0,
+          "coil": {
+            "coil_footage_ft": 204.08163265306123,
+            "coil_piw_lb_per_in": 41.666666666666664
+          }
+        },
+        {
+          "row_index": 1,
+          "coil": {
+            "coil_footage_ft": 255.1020408163265,
+            "coil_piw_lb_per_in": 41.666666666666664
+          }
+        }
+      ],
+      "errors": []
+    }
+  },
+  {
+    "name": "batch-scrap-happy-path",
+    "description": "Batch JSON input with two valid scrap jobs",
+    "args": ["--input-file", "@ROOT@/fixtures/batch/scrap-batch-happy-path.json", "--json"],
+    "returncode": 0,
+    "expected_json": {
+      "results": [
+        {
+          "row_index": 0,
+          "scrap": {
+            "scrap_lb": 200.0,
+            "total_cost": 2000.0,
+            "price_per_lb": 0.4167,
+            "is_pickup": false
+          }
+        },
+        {
+          "row_index": 1,
+          "scrap": {
+            "scrap_lb": -500.0,
+            "total_cost": 1800.0,
+            "price_per_lb": 0.36,
+            "is_pickup": true
+          }
+        }
+      ],
+      "errors": []
+    }
+  },
+  {
+    "name": "invalid-input-missing-length",
+    "description": "Error case: --width provided without --length",
+    "args": ["--width", "48"],
+    "returncode": 1,
+    "stderr_contains": "--length is required"
+  },
+  {
+    "name": "invalid-input-conflicting-gauge-psf",
+    "description": "Error case: both --gauge and --psf provided",
+    "args": ["--width", "48", "--length", "120", "--gauge", "16", "--psf", "2.5"],
+    "returncode": 1,
+    "stderr_contains": "Cannot specify both --gauge and --psf"
+  },
+  {
+    "name": "invalid-input-unknown-gauge",
+    "description": "Error case: gauge key not in table",
+    "args": ["--width", "48", "--length", "120", "--gauge", "INVALID"],
+    "returncode": 1,
+    "stderr_contains": "not in HR/HRPO/CR table"
+  }
+]

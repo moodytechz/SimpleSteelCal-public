@@ -1,0 +1,1116 @@
+// ---------------------------------------------------------------------------
+// AppWindow – root window with section navigation for Sheet and Coil
+// ---------------------------------------------------------------------------
+
+import { Theme } from "theme.slint";
+import { SheetPanel } from "sheet-panel.slint";
+import { CoilPanel } from "coil-panel.slint";
+import { ScrollView, Button, TextEdit, ComboBox, LineEdit } from "std-widgets.slint";
+
+export { Theme }
+
+export component AppWindow inherits Window {
+    title: "Simple Steel Calculator";
+    icon: @image-url("../../../Harbor_logo_hr.png");
+    preferred-width: 780px;
+    preferred-height: 720px;
+    background: Theme.background;
+
+    // ---- Native Menu Bar ----
+    MenuBar {
+        Menu {
+            title: "File";
+            MenuItem {
+                title: "Exit";
+                activated => { root.menu-exit(); }
+            }
+        }
+        Menu {
+            title: "Help";
+            MenuItem {
+                title: "User Guide";
+                activated => { root.menu-open-help(); }
+            }
+            MenuItem {
+                title: "View History";
+                activated => { root.menu-open-history(); }
+            }
+            MenuItem {
+                title: "About";
+                activated => { root.menu-open-about(); }
+            }
+        }
+        Menu {
+            title: "Tools";
+            MenuItem {
+                title: "Edit Configuration";
+                activated => { root.menu-open-config-editor(); }
+            }
+        }
+    }
+
+    // ---- Main content (behind overlays) ----
+    VerticalLayout {
+        padding: Theme.spacing-lg;
+        spacing: Theme.spacing-md;
+
+        // ---- Header ----
+        HorizontalLayout {
+            alignment: start;
+            spacing: Theme.spacing-md;
+
+            VerticalLayout {
+                alignment: center;
+                spacing: Theme.spacing-sm;
+
+                Text {
+                    text: "Simple Steel Calculator";
+                    font-size: 22px;
+                    font-weight: 700;
+                    color: Theme.primary;
+                    accessible-role: text;
+                    accessible-label: "Simple Steel Calculator heading";
+                }
+
+                Text {
+                    text: "Harbor Pipe & Steel Inc.";
+                    font-size: 13px;
+                    color: Theme.text-secondary;
+                    accessible-role: text;
+                    accessible-label: "Harbor Pipe and Steel Incorporated";
+                }
+            }
+        }
+
+        // ---- Separator ----
+        Rectangle {
+            height: 1px;
+            background: Theme.border;
+        }
+
+        // ---- Main navigation + content ----
+        HorizontalLayout {
+            vertical-stretch: 1;
+            spacing: 10px;
+
+            Rectangle {
+                width: 76px;
+                vertical-stretch: 1;
+                background: Theme.surface;
+                border-radius: Theme.border-radius;
+                border-width: 1px;
+                border-color: Theme.border;
+
+                VerticalLayout {
+                    padding: 6px;
+                    spacing: 4px;
+
+                    Rectangle {
+                        height: 34px;
+                        border-radius: 5px;
+                        border-width: 1px;
+                        border-color: root.active-tab-index == 0 ? Theme.primary : Theme.border;
+                        background: root.active-tab-index == 0 ? Theme.primary : Theme.surface-alt;
+                        accessible-role: button;
+                        accessible-label: "Open Sheet section";
+                        Text {
+                            text: "Sheet";
+                            font-size: 12px;
+                            font-weight: root.active-tab-index == 0 ? 700 : 500;
+                            color: root.active-tab-index == 0 ? Theme.surface : Theme.text-primary;
+                            horizontal-alignment: center;
+                            vertical-alignment: center;
+                        }
+                        TouchArea {
+                            clicked => {
+                                root.active-tab-index = 0;
+                            }
+                        }
+                    }
+
+                    Rectangle {
+                        height: 34px;
+                        border-radius: 5px;
+                        border-width: 1px;
+                        border-color: root.active-tab-index == 1 ? Theme.primary : Theme.border;
+                        background: root.active-tab-index == 1 ? Theme.primary : Theme.surface-alt;
+                        accessible-role: button;
+                        accessible-label: "Open Coil section";
+                        Text {
+                            text: "Coil";
+                            font-size: 12px;
+                            font-weight: root.active-tab-index == 1 ? 700 : 500;
+                            color: root.active-tab-index == 1 ? Theme.surface : Theme.text-primary;
+                            horizontal-alignment: center;
+                            vertical-alignment: center;
+                        }
+                        TouchArea {
+                            clicked => {
+                                root.active-tab-index = 1;
+                            }
+                        }
+                    }
+
+                    Rectangle {
+                        vertical-stretch: 1;
+                        background: transparent;
+                    }
+                }
+            }
+
+            Rectangle {
+                horizontal-stretch: 1;
+                vertical-stretch: 1;
+                background: Theme.surface-alt;
+                border-radius: Theme.border-radius;
+                border-width: 1px;
+                border-color: Theme.border;
+
+                VerticalLayout {
+                    padding: 0px;
+
+                    if root.active-tab-index == 0 : ScrollView {
+                        vertical-stretch: 1;
+                        horizontal-stretch: 1;
+
+                        sheet-panel := SheetPanel {
+                            table-names: root.table-names;
+                            gauge-keys: root.gauge-keys;
+                            selected-table-index <=> root.selected-table-index;
+                            selected-gauge-index <=> root.selected-gauge-index;
+                            gauge-text <=> root.gauge-text;
+                            calc-mode <=> root.calc-mode;
+                            width-text <=> root.width-text;
+                            length-text <=> root.length-text;
+                            qty-text <=> root.qty-text;
+                            psf-text <=> root.psf-text;
+                            thickness-text <=> root.thickness-text;
+                            result-each-lb: root.result-each-lb;
+                            result-total-lb: root.result-total-lb;
+                            result-psf: root.result-psf;
+                            result-area-each: root.result-area-each;
+                            result-area-total: root.result-area-total;
+                            error-message: root.error-message;
+                            price-mode-index <=> root.price-mode-index;
+                            price-value-text <=> root.price-value-text;
+                            markup-text <=> root.markup-text;
+                            tax-text <=> root.tax-text;
+                            setup-fee-text <=> root.setup-fee-text;
+                            minimum-order-text <=> root.minimum-order-text;
+                            cost-each-before-tax: root.cost-each-before-tax;
+                            cost-each-after-tax: root.cost-each-after-tax;
+                            cost-total-before-tax: root.cost-total-before-tax;
+                            cost-total-after-tax: root.cost-total-after-tax;
+                            cost-minimum-applied: root.cost-minimum-applied;
+                            pricing-error-message: root.pricing-error-message;
+
+                            table-changed(idx) => {
+                                root.table-changed(idx);
+                            }
+                            gauge-edited(text) => {
+                                root.gauge-edited(text);
+                            }
+                            gauge-accept(text) => {
+                                root.gauge-accept(text);
+                            }
+                            calculate() => {
+                                root.calculate();
+                            }
+                            calculate-pricing() => {
+                                root.calculate-pricing();
+                            }
+                            clear-sheet() => {
+                                root.clear-sheet();
+                            }
+                            advance-focus() => {
+                                root.advance-focus();
+                            }
+                        }
+                    }
+
+                    if root.active-tab-index == 1 : ScrollView {
+                        vertical-stretch: 1;
+                        horizontal-stretch: 1;
+
+                        coil-panel := CoilPanel {
+                            coil-width-text <=> root.coil-width-text;
+                            coil-thickness-text <=> root.coil-thickness-text;
+                            coil-id-text <=> root.coil-id-text;
+                            coil-weight-text <=> root.coil-weight-text;
+                            coil-density-text <=> root.coil-density-text;
+                            result-footage: root.coil-result-footage;
+                            result-piw: root.coil-result-piw;
+                            result-od: root.coil-result-od;
+                            coil-error-message: root.coil-error-message;
+
+                            calculate-coil() => {
+                                root.calculate-coil();
+                            }
+                            clear-coil() => {
+                                root.clear-coil();
+                            }
+                            advance-focus() => {
+                                root.advance-focus();
+                            }
+                        }
+                    }
+                }
+            }
+        }
+
+        // ---- Footer ----
+        HorizontalLayout {
+            alignment: space-between;
+
+            Text {
+                text: "Default: " + root.default-table + " / " + root.default-gauge;
+                font-size: 11px;
+                color: Theme.text-muted;
+                accessible-role: text;
+                accessible-label: "Default table and gauge";
+            }
+
+            Text {
+                text: "v" + root.app-version + "  •  " + root.app-copyright;
+                font-size: 11px;
+                color: Theme.text-muted;
+                accessible-role: text;
+                accessible-label: "Version " + root.app-version;
+            }
+        }
+    }
+
+    // ===================================================================
+    // Modal Overlay Infrastructure
+    // ===================================================================
+    // Each dialog overlay: semi-transparent backdrop covering full window,
+    // centered content panel, TouchArea on backdrop to block clicks.
+    // Only one dialog visible at a time (mutual exclusion via properties).
+
+    // ---- Help Dialog Overlay ----
+    if root.show-help: Rectangle {
+        x: 0;
+        y: 0;
+        width: root.width;
+        height: root.height;
+        background: #00000080;
+
+        TouchArea {
+            // Block clicks on content behind the overlay
+        }
+
+        Rectangle {
+            x: (parent.width - self.width) / 2;
+            y: (parent.height - self.height) / 2;
+            width: min(parent.width * 0.85, 700px);
+            height: min(parent.height * 0.85, 580px);
+            background: Theme.surface;
+            border-radius: Theme.border-radius;
+            border-width: 1px;
+            border-color: Theme.border;
+
+            VerticalLayout {
+                padding: Theme.spacing-lg;
+                spacing: Theme.spacing-md;
+
+                Text {
+                    text: "User Guide";
+                    font-size: 18px;
+                    font-weight: 700;
+                    color: Theme.primary;
+                    accessible-role: text;
+                    accessible-label: "User Guide dialog title";
+                }
+
+                ScrollView {
+                    vertical-stretch: 1;
+
+                    VerticalLayout {
+                        spacing: Theme.spacing-md;
+                        padding-right: Theme.spacing-sm;
+
+                        // ---- Section 1: Sheet Inputs ----
+                        Text {
+                            text: "1) Sheet Inputs";
+                            font-size: 14px;
+                            font-weight: 700;
+                            color: Theme.primary;
+                            accessible-role: text;
+                            accessible-label: "Section 1 Sheet Inputs";
+                        }
+                        Text {
+                            text: "Enter Width, Length, and Quantity.\n\n• Gauge mode: select \"Gauge\" input mode, then choose Material Type and Gauge/Size from the dropdowns.\n• Direct lb/ft² mode: select \"PSF\" input mode, then enter the lb/ft² value directly.\n• Thickness mode: select \"Thickness\" input mode, then enter Thickness (in).\n\nClick \"Calculate\" to compute each weight, total weight, lb/ft², and area.";
+                            font-size: 12px;
+                            color: Theme.text-secondary;
+                            wrap: word-wrap;
+                            accessible-role: text;
+                            accessible-label: "Sheet inputs help text";
+                        }
+
+                        // ---- Section 2: Quote / Pricing ----
+                        Text {
+                            text: "2) Quote / Pricing";
+                            font-size: 14px;
+                            font-weight: 700;
+                            color: Theme.primary;
+                            accessible-role: text;
+                            accessible-label: "Section 2 Quote Pricing";
+                        }
+                        Text {
+                            text: "In the Pricing section, choose Price mode: per lb, per ft², or per sheet.\n\nEnter Unit price, Markup %, Sales tax %, Setup fee, and Minimum order as needed.\n\nClick \"Calculate Pricing\" to update the Quote Summary with per-piece and total pricing before and after tax.";
+                            font-size: 12px;
+                            color: Theme.text-secondary;
+                            wrap: word-wrap;
+                            accessible-role: text;
+                            accessible-label: "Quote pricing help text";
+                        }
+
+                        // ---- Section 3: Scrap / Pickup ----
+                        Text {
+                            text: "3) Scrap / Pickup";
+                            font-size: 14px;
+                            font-weight: 700;
+                            color: Theme.primary;
+                            accessible-role: text;
+                            accessible-label: "Section 3 Scrap Pickup";
+                        }
+                        Text {
+                            text: "Enter Base Cost per lb, Processing Cost per lb, Actual Weight, and Ending Weight.\n\nUse \"Copy to Actual\" or \"Copy to Ending\" to reuse the latest sheet total weight.\n\nClick \"Calculate Scrap\" to show Scrap (lb), Total Cost, Price per lb, and Scrap Charge per lb. If scrap is zero or negative, the result is classified as a Pickup.";
+                            font-size: 12px;
+                            color: Theme.text-secondary;
+                            wrap: word-wrap;
+                            accessible-role: text;
+                            accessible-label: "Scrap pickup help text";
+                        }
+
+                        // ---- Section 4: Coil Calculation ----
+                        Text {
+                            text: "4) Coil Calculation";
+                            font-size: 14px;
+                            font-weight: 700;
+                            color: Theme.primary;
+                            accessible-role: text;
+                            accessible-label: "Section 4 Coil Calculation";
+                        }
+                        Text {
+                            text: "Inputs: Coil Width (in), Coil Thickness (in), Coil ID (in), and Coil Weight (lb).\n\nComputed results:\n• Coil Footage (ft) — requires Width, Thickness, and Weight\n• PIW (lb/in) — requires Width and Weight\n• Coil OD (in) — requires Width, Thickness, Weight, and ID\n\nClick \"Calculate Coil\" after entering the available coil inputs.";
+                            font-size: 12px;
+                            color: Theme.text-secondary;
+                            wrap: word-wrap;
+                            accessible-role: text;
+                            accessible-label: "Coil calculation help text";
+                        }
+
+                        // ---- Section 5: History and Menus ----
+                        Text {
+                            text: "5) History and Menus";
+                            font-size: 14px;
+                            font-weight: 700;
+                            color: Theme.primary;
+                            accessible-role: text;
+                            accessible-label: "Section 5 History and Menus";
+                        }
+                        Text {
+                            text: "Help menu commands: User Guide, View History, and About.\nTools menu: Edit Configuration.\n\n\"View History\" supports search, type filtering, Recall, and Export.\nHistory is session-only until you export it.";
+                            font-size: 12px;
+                            color: Theme.text-secondary;
+                            wrap: word-wrap;
+                            accessible-role: text;
+                            accessible-label: "History and menus help text";
+                        }
+
+                        // ---- Section 6: Configuration ----
+                        Text {
+                            text: "6) Configuration";
+                            font-size: 14px;
+                            font-weight: 700;
+                            color: Theme.primary;
+                            accessible-role: text;
+                            accessible-label: "Section 6 Configuration";
+                        }
+                        Text {
+                            text: "Tools > Edit Configuration opens a JSON editor with Validate, Save, Revert, Restore Defaults, and Open Location.\n\nSupported config keys:\n• density_lb_ft3 (number): steel density in lb/ft³. Default 490.0.\n• default_table (string): default material table, e.g. \"HR/HRPO/CR\".\n• default_gauge (string): default gauge/size key, e.g. \"16\" or \"3/16\".\n\nInvalid types, tables, and gauges are ignored or normalized on save. Delete a key to revert that setting to its built-in default.";
+                            font-size: 12px;
+                            color: Theme.text-secondary;
+                            wrap: word-wrap;
+                            accessible-role: text;
+                            accessible-label: "Configuration help text";
+                        }
+
+                        // ---- Section 7: Keyboard Shortcuts ----
+                        Text {
+                            text: "7) Keyboard Shortcuts";
+                            font-size: 14px;
+                            font-weight: 700;
+                            color: Theme.primary;
+                            accessible-role: text;
+                            accessible-label: "Section 7 Keyboard Shortcuts";
+                        }
+                        Text {
+                            text: "F1 — Open User Guide\nCtrl+H — Open View History\nCtrl+E — Open Edit Configuration\nCtrl+S or Ctrl+Enter — Calculate Sheet & Quote\nCtrl+Shift+C — Calculate Coil\nCtrl+L — Copy to Actual (scrap)\nCtrl+R — Copy to Ending (scrap)\nEscape — Close any open dialog";
+                            font-size: 12px;
+                            color: Theme.text-secondary;
+                            wrap: word-wrap;
+                            accessible-role: text;
+                            accessible-label: "Keyboard shortcuts help text";
+                        }
+                    }
+                }
+
+                HorizontalLayout {
+                    alignment: end;
+                    Button {
+                        text: "Close";
+                        clicked => { root.show-help = false; }
+                        accessible-label: "Close Help dialog";
+                    }
+                }
+            }
+        }
+    }
+
+    // ---- About Dialog Overlay ----
+    if root.show-about: Rectangle {
+        x: 0;
+        y: 0;
+        width: root.width;
+        height: root.height;
+        background: #00000080;
+
+        TouchArea {
+            // Block clicks on content behind the overlay
+        }
+
+        Rectangle {
+            x: (parent.width - self.width) / 2;
+            y: (parent.height - self.height) / 2;
+            width: min(parent.width * 0.7, 480px);
+            height: min(parent.height * 0.6, 360px);
+            background: Theme.surface;
+            border-radius: Theme.border-radius;
+            border-width: 1px;
+            border-color: Theme.border;
+
+            VerticalLayout {
+                padding: Theme.spacing-lg;
+                spacing: Theme.spacing-md;
+                alignment: center;
+
+                Text {
+                    text: "SIMPLE STEEL CALCULATOR";
+                    font-size: 20px;
+                    font-weight: 700;
+                    color: Theme.primary;
+                    horizontal-alignment: center;
+                    accessible-role: text;
+                    accessible-label: "Simple Steel Calculator title";
+                }
+
+                Text {
+                    text: "Version " + root.app-version;
+                    font-size: 14px;
+                    font-weight: 500;
+                    color: Theme.text-primary;
+                    horizontal-alignment: center;
+                    accessible-role: text;
+                    accessible-label: "Version " + root.app-version;
+                }
+
+                Text {
+                    text: root.app-copyright;
+                    font-size: 13px;
+                    color: Theme.text-secondary;
+                    horizontal-alignment: center;
+                    accessible-role: text;
+                    accessible-label: root.app-copyright;
+                }
+
+                Text {
+                    text: "DEVELOPED BY: GEORGE MOODY";
+                    font-size: 13px;
+                    font-weight: 600;
+                    color: Theme.text-secondary;
+                    horizontal-alignment: center;
+                    accessible-role: text;
+                    accessible-label: "Developed by George Moody";
+                }
+
+                // Spacer
+                Rectangle {
+                    vertical-stretch: 1;
+                }
+
+                HorizontalLayout {
+                    alignment: center;
+                    Button {
+                        text: "Close";
+                        clicked => { root.show-about = false; }
+                        accessible-label: "Close About dialog";
+                    }
+                }
+            }
+        }
+    }
+
+    // ---- Config Editor Dialog Overlay ----
+    if root.show-config-editor: Rectangle {
+        x: 0;
+        y: 0;
+        width: root.width;
+        height: root.height;
+        background: #00000080;
+
+        TouchArea {
+            // Block clicks on content behind the overlay
+        }
+
+        Rectangle {
+            x: (parent.width - self.width) / 2;
+            y: (parent.height - self.height) / 2;
+            width: min(parent.width * 0.9, 760px);
+            height: min(parent.height * 0.9, 620px);
+            background: Theme.surface;
+            border-radius: Theme.border-radius;
+            border-width: 1px;
+            border-color: Theme.border;
+
+            VerticalLayout {
+                padding: Theme.spacing-lg;
+                spacing: Theme.spacing-md;
+
+                Text {
+                    text: "Edit Configuration";
+                    font-size: 18px;
+                    font-weight: 700;
+                    color: Theme.primary;
+                    accessible-role: text;
+                    accessible-label: "Config Editor dialog title";
+                }
+
+                // ---- JSON Editor ----
+                TextEdit {
+                    vertical-stretch: 1;
+                    text <=> root.config-editor-text;
+                    font-family: "Consolas, Courier New, monospace";
+                    font-size: 13px;
+                    wrap: no-wrap;
+                    accessible-role: text-input;
+                    accessible-label: "Configuration JSON editor";
+                }
+
+                // ---- Status message ----
+                Text {
+                    text: root.config-editor-status;
+                    font-size: 12px;
+                    color: root.config-editor-status-is-error ? Theme.error : Theme.success;
+                    wrap: word-wrap;
+                    visible: root.config-editor-status != "";
+                    accessible-role: text;
+                    accessible-label: "Config editor status message";
+                }
+
+                // ---- Buttons row ----
+                HorizontalLayout {
+                    spacing: Theme.spacing-sm;
+                    alignment: start;
+
+                    Button {
+                        text: "Validate JSON";
+                        clicked => { root.config-editor-validate(); }
+                        accessible-label: "Validate JSON syntax";
+                    }
+
+                    Button {
+                        text: "Save";
+                        clicked => { root.config-editor-save(); }
+                        accessible-label: "Save configuration to file";
+                    }
+
+                    Button {
+                        text: "Revert";
+                        clicked => { root.config-editor-revert(); }
+                        accessible-label: "Revert to last saved content";
+                    }
+
+                    Button {
+                        text: "Restore Defaults";
+                        clicked => { root.config-editor-restore-defaults(); }
+                        accessible-label: "Restore built-in default configuration";
+                    }
+
+                    Button {
+                        text: "Open Config Location";
+                        clicked => { root.config-editor-open-location(); }
+                        accessible-label: "Open config file location in file explorer";
+                    }
+
+                    // Spacer to push Close to the right
+                    Rectangle {
+                        horizontal-stretch: 1;
+                    }
+
+                    Button {
+                        text: "Close";
+                        clicked => { root.show-config-editor = false; }
+                        accessible-label: "Close Config Editor dialog";
+                    }
+                }
+            }
+        }
+    }
+
+    // ---- History Dialog Overlay ----
+    if root.show-history: Rectangle {
+        x: 0;
+        y: 0;
+        width: root.width;
+        height: root.height;
+        background: #00000080;
+
+        TouchArea {
+            // Block clicks on content behind the overlay
+        }
+
+        Rectangle {
+            x: (parent.width - self.width) / 2;
+            y: (parent.height - self.height) / 2;
+            width: min(parent.width * 0.9, 760px);
+            height: min(parent.height * 0.9, 620px);
+            background: Theme.surface;
+            border-radius: Theme.border-radius;
+            border-width: 1px;
+            border-color: Theme.border;
+
+            VerticalLayout {
+                padding: Theme.spacing-lg;
+                spacing: Theme.spacing-md;
+
+                Text {
+                    text: "View History";
+                    font-size: 18px;
+                    font-weight: 700;
+                    color: Theme.primary;
+                    accessible-role: text;
+                    accessible-label: "History dialog title";
+                }
+
+                // ---- Filter Row ----
+                HorizontalLayout {
+                    spacing: Theme.spacing-sm;
+                    alignment: start;
+
+                    Text {
+                        text: "Type:";
+                        font-size: 13px;
+                        color: Theme.text-primary;
+                        vertical-alignment: center;
+                        accessible-role: text;
+                        accessible-label: "Filter by type label";
+                    }
+
+                    ComboBox {
+                        model: ["All", "Sheet", "Coil", "Scrap"];
+                        current-index <=> root.history-filter-type-index;
+                        current-value: self.model[self.current-index];
+                        width: 120px;
+                        accessible-label: "Filter history by calculation type";
+                        selected(value) => {
+                            root.history-filter-changed();
+                        }
+                    }
+
+                    Text {
+                        text: "Search:";
+                        font-size: 13px;
+                        color: Theme.text-primary;
+                        vertical-alignment: center;
+                        accessible-role: text;
+                        accessible-label: "Search label";
+                    }
+
+                    LineEdit {
+                        text <=> root.history-search-text;
+                        placeholder-text: "Search entries...";
+                        horizontal-stretch: 1;
+                        accessible-label: "Search history entries";
+                        key-pressed(event) => {
+                            if (!event.modifiers.control && !event.modifiers.shift && event.text == Key.Return) {
+                                root.advance-focus();
+                                return accept;
+                            }
+                            return reject;
+                        }
+                        edited(text) => {
+                            root.history-filter-changed();
+                        }
+                    }
+                }
+
+                // ---- Main content area: list + preview ----
+                HorizontalLayout {
+                    vertical-stretch: 1;
+                    spacing: Theme.spacing-md;
+
+                    // ---- Entry List (left side) ----
+                    Rectangle {
+                        horizontal-stretch: 1;
+                        border-width: 1px;
+                        border-color: Theme.border;
+                        border-radius: 4px;
+                        background: Theme.surface-alt;
+                        clip: true;
+
+                        if root.history-entry-count == 0: VerticalLayout {
+                            alignment: center;
+                            Text {
+                                text: "No history available";
+                                font-size: 13px;
+                                color: Theme.text-muted;
+                                horizontal-alignment: center;
+                                accessible-role: text;
+                                accessible-label: "No history entries available";
+                            }
+                        }
+
+                        if root.history-entry-count > 0: ScrollView {
+                            VerticalLayout {
+                                spacing: 2px;
+                                padding: 4px;
+
+                                for entry[idx] in root.history-entry-labels: Rectangle {
+                                    height: 28px;
+                                    background: idx == root.history-selected-index ? Theme.primary-light : transparent;
+                                    border-radius: 4px;
+
+                                    TouchArea {
+                                        clicked => {
+                                            root.history-selected-index = idx;
+                                            root.history-entry-selected(idx);
+                                        }
+                                    }
+
+                                    HorizontalLayout {
+                                        padding-left: 8px;
+                                        padding-right: 8px;
+                                        alignment: start;
+
+                                        Text {
+                                            text: entry;
+                                            font-size: 12px;
+                                            color: idx == root.history-selected-index ? Theme.surface : Theme.text-primary;
+                                            vertical-alignment: center;
+                                            overflow: elide;
+                                            accessible-role: text;
+                                            accessible-label: "History entry: " + entry;
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
+
+                    // ---- Preview area (right side) ----
+                    Rectangle {
+                        horizontal-stretch: 1;
+                        border-width: 1px;
+                        border-color: Theme.border;
+                        border-radius: 4px;
+                        background: Theme.surface-alt;
+                        clip: true;
+
+                        ScrollView {
+                            VerticalLayout {
+                                padding: Theme.spacing-sm;
+
+                                Text {
+                                    text: root.history-preview-text == "" ? "Select an entry to preview" : root.history-preview-text;
+                                    font-size: 12px;
+                                    font-family: "Consolas";
+                                    color: root.history-preview-text == "" ? Theme.text-muted : Theme.text-primary;
+                                    wrap: word-wrap;
+                                    accessible-role: text;
+                                    accessible-label: "History entry preview";
+                                }
+                            }
+                        }
+                    }
+                }
+
+                // ---- Status message ----
+                Text {
+                    text: root.history-status-text;
+                    font-size: 12px;
+                    color: root.history-status-is-error ? Theme.error : Theme.success;
+                    wrap: word-wrap;
+                    visible: root.history-status-text != "";
+                    accessible-role: text;
+                    accessible-label: "History status message";
+                }
+
+                // ---- Button Row ----
+                HorizontalLayout {
+                    spacing: Theme.spacing-sm;
+                    alignment: start;
+
+                    Button {
+                        text: "Recall";
+                        enabled: root.history-selected-index >= 0 && root.history-entry-count > 0;
+                        clicked => { root.history-recall(); }
+                        accessible-label: "Recall selected history entry";
+                    }
+
+                    Button {
+                        text: "Export";
+                        enabled: root.history-entry-count > 0;
+                        clicked => { root.history-export(); }
+                        accessible-label: "Export history to text file";
+                    }
+
+                    // Spacer to push Close to the right
+                    Rectangle {
+                        horizontal-stretch: 1;
+                    }
+
+                    Button {
+                        text: "Close";
+                        clicked => { root.show-history = false; }
+                        accessible-label: "Close History dialog";
+                    }
+                }
+            }
+        }
+    }
+
+    // ---- Window-level FocusScope for keyboard shortcuts ----
+    FocusScope {
+        x: 0;
+        y: 0;
+        width: 0;
+        height: 0;
+
+        key-pressed(event) => {
+            // Track whether any dialog is currently open
+            // Dialog shortcuts (Escape, F1, Ctrl+H, Ctrl+E) always work.
+            // Action shortcuts (Ctrl+S, Ctrl+Enter, Ctrl+Shift+C, Ctrl+L, Ctrl+R) are suppressed when a dialog is open.
+
+            // Escape: close any open dialog
+            if (event.text == Key.Escape) {
+                if (root.show-help) {
+                    root.show-help = false;
+                    return accept;
+                }
+                if (root.show-about) {
+                    root.show-about = false;
+                    return accept;
+                }
+                if (root.show-config-editor) {
+                    root.show-config-editor = false;
+                    return accept;
+                }
+                if (root.show-history) {
+                    root.show-history = false;
+                    return accept;
+                }
+            }
+
+            // F1: Open Help dialog (always works)
+            if (event.text == Key.F1) {
+                root.menu-open-help();
+                return accept;
+            }
+
+            // Ctrl+H: Open History dialog (always works)
+            if (event.modifiers.control && !event.modifiers.shift && (event.text == "h" || event.text == "H")) {
+                root.menu-open-history();
+                return accept;
+            }
+
+            // Ctrl+E: Open Config Editor (always works)
+            if (event.modifiers.control && !event.modifiers.shift && (event.text == "e" || event.text == "E")) {
+                root.menu-open-config-editor();
+                return accept;
+            }
+
+            // --- Action shortcuts: suppressed when a dialog is open ---
+            if (root.show-help || root.show-about || root.show-config-editor || root.show-history) {
+                return reject;
+            }
+
+            // Ctrl+S: Sheet calculation
+            if (event.modifiers.control && !event.modifiers.shift && (event.text == "s" || event.text == "S")) {
+                root.calculate();
+                return accept;
+            }
+
+            // Ctrl+Enter: Sheet calculation
+            if (event.modifiers.control && event.text == Key.Return) {
+                root.calculate();
+                return accept;
+            }
+
+            // Ctrl+Shift+C: Coil calculation
+            if (event.modifiers.control && event.modifiers.shift && (event.text == "c" || event.text == "C")) {
+                root.calculate-coil();
+                return accept;
+            }
+
+            // Ctrl+L: Copy to Actual (scrap)
+            if (event.modifiers.control && !event.modifiers.shift && (event.text == "l" || event.text == "L")) {
+                root.copy-to-actual();
+                return accept;
+            }
+
+            // Ctrl+R: Copy to Ending (scrap)
+            if (event.modifiers.control && !event.modifiers.shift && (event.text == "r" || event.text == "R")) {
+                root.copy-to-ending();
+                return accept;
+            }
+
+            return reject;
+        }
+    }
+
+    // -----------------------------------------------------------------------
+    // Properties set from Rust side
+    // -----------------------------------------------------------------------
+
+    in property <string> default-table: "";
+    in property <string> default-gauge: "";
+    in property <string> app-version: "";
+    in property <string> app-copyright: "";
+
+    // Active tab: Sheet=0, Coil=1. Bound to TabWidget current-index.
+    in-out property <int> active-tab-index: 0;
+
+    // Table / gauge dropdown models
+    in property <[string]> table-names: [];
+    in property <[string]> gauge-keys: [];
+
+    // Selected indices
+    in-out property <int> selected-table-index: 0;
+    in-out property <int> selected-gauge-index: 0;
+    in-out property <string> gauge-text: "";
+
+    // Calculation mode
+    in-out property <int> calc-mode: 0;
+
+    // Sheet input fields
+    in-out property <string> width-text: "";
+    in-out property <string> length-text: "";
+    in-out property <string> qty-text: "1";
+    in-out property <string> psf-text: "";
+    in-out property <string> thickness-text: "";
+
+    // Sheet results
+    in property <string> result-each-lb: "";
+    in property <string> result-total-lb: "";
+    in property <string> result-psf: "";
+    in property <string> result-area-each: "";
+    in property <string> result-area-total: "";
+
+    // Sheet error
+    in property <string> error-message: "";
+
+    // Pricing inputs
+    in-out property <int> price-mode-index: 0;
+    in-out property <string> price-value-text: "";
+    in-out property <string> markup-text: "";
+    in-out property <string> tax-text: "";
+    in-out property <string> setup-fee-text: "";
+    in-out property <string> minimum-order-text: "";
+
+    // Pricing results
+    in property <string> cost-each-before-tax: "";
+    in property <string> cost-each-after-tax: "";
+    in property <string> cost-total-before-tax: "";
+    in property <string> cost-total-after-tax: "";
+    in property <string> cost-minimum-applied: "";
+    in property <string> pricing-error-message: "";
+
+    // ---- Coil properties ----
+    in-out property <string> coil-width-text: "";
+    in-out property <string> coil-thickness-text: "";
+    in-out property <string> coil-id-text: "";
+    in-out property <string> coil-weight-text: "";
+    in-out property <string> coil-density-text: "";
+
+    // Coil results
+    in property <string> coil-result-footage: "";
+    in property <string> coil-result-piw: "";
+    in property <string> coil-result-od: "";
+
+    // Coil error
+    in property <string> coil-error-message: "";
+
+    // ---- Scrap properties ----
+    in-out property <string> scrap-actual-weight-text: "";
+    in-out property <string> scrap-ending-weight-text: "";
+    in-out property <string> scrap-base-cost-text: "";
+    in-out property <string> scrap-processing-cost-text: "";
+
+    // Scrap results
+    in property <string> scrap-result-scrap-lb: "";
+    in property <string> scrap-result-total-cost: "";
+    in property <string> scrap-result-price-per-lb: "";
+    in property <string> scrap-result-scrap-charge-per-lb: "";
+    in property <string> scrap-result-is-pickup: "";
+
+    // Scrap error
+    in property <string> scrap-error-message: "";
+
+    // ---- Dialog visibility properties (mutual exclusion) ----
+    in-out property <bool> show-help: false;
+    in-out property <bool> show-about: false;
+    in-out property <bool> show-config-editor: false;
+    in-out property <bool> show-history: false;
+
+    // ---- Config Editor properties ----
+    in-out property <string> config-editor-text: "";
+    in-out property <string> config-editor-status: "";
+    in-out property <bool> config-editor-status-is-error: false;
+
+    // ---- History dialog properties ----
+    in-out property <int> history-filter-type-index: 0;
+    in-out property <string> history-search-text: "";
+    in property <[string]> history-entry-labels: [];
+    in property <int> history-entry-count: 0;
+    in-out property <int> history-selected-index: -1;
+    in property <string> history-preview-text: "";
+    in property <string> history-status-text: "";
+    in property <bool> history-status-is-error: false;
+
+    // ---- Callbacks ----
+    callback table-changed(int);
+    callback gauge-edited(string);
+    callback gauge-accept(string);
+    callback calculate();
+    callback calculate-pricing();
+    callback calculate-coil();
+    callback calculate-scrap();
+    callback clear-sheet();
+    callback clear-coil();
+    callback clear-scrap();
+    callback copy-to-actual();
+    callback copy-to-ending();
+    callback advance-focus();
+
+    // Menu callbacks (wired from Rust side)
+    callback menu-exit();
+    callback menu-open-help();
+    callback menu-open-about();
+    callback menu-open-config-editor();
+    callback menu-open-history();
+
+    // Config editor callbacks (wired from Rust side)
+    callback config-editor-validate();
+    callback config-editor-save();
+    callback config-editor-revert();
+    callback config-editor-restore-defaults();
+    callback config-editor-open-location();
+
+    // History dialog callbacks (wired from Rust side)
+    callback history-filter-changed();
+    callback history-entry-selected(int);
+    callback history-recall();
+    callback history-export();
+}

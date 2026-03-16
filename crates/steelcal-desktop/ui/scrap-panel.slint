@@ -1,0 +1,58 @@
+// ---------------------------------------------------------------------------
+// ScrapPanel – scrap/pickup calculation workflow component
+// ---------------------------------------------------------------------------
+
+import { GroupBox } from "std-widgets.slint";
+import { Theme } from "theme.slint";
+
+export component ScrapPanel inherits VerticalLayout {
+    spacing: Theme.spacing-md;
+
+    // -----------------------------------------------------------------------
+    // Properties bound from Rust
+    // -----------------------------------------------------------------------
+
+    // Input fields
+    in-out property <string> actual-weight-text: "";
+    in-out property <string> ending-weight-text: "";
+    in-out property <string> base-cost-text: "";
+    in-out property <string> processing-cost-text: "";
+
+    // Scrap results
+    in property <string> result-scrap-lb: "";
+    in property <string> result-total-cost: "";
+    in property <string> result-price-per-lb: "";
+    in property <string> result-scrap-charge-per-lb: "";
+    in property <string> result-is-pickup: "";
+
+    // Error message
+    in property <string> scrap-error-message: "";
+
+    // Callbacks
+    callback calculate-scrap();
+    callback clear-scrap();
+    callback copy-to-actual();
+    callback copy-to-ending();
+
+    // -----------------------------------------------------------------------
+    // Scrap Calculation Section
+    // -----------------------------------------------------------------------
+
+    GroupBox {
+        title: "Scrap / Pickup Calculation";
+
+        VerticalLayout {
+            spacing: Theme.spacing-sm;
+            padding: Theme.spacing-sm;
+
+            Text {
+                text: "The Scrap tab is temporarily disabled in the desktop build while a Slint startup stack overflow is being isolated.";
+                font-size: 12px;
+                color: Theme.text-secondary;
+                wrap: word-wrap;
+                accessible-role: text;
+                accessible-label: "Scrap tab temporarily disabled";
+            }
+        }
+    }
+}

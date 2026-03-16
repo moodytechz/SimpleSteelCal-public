@@ -1,0 +1,694 @@
+// ---------------------------------------------------------------------------
+// SheetPanel – sheet calculation workflow component
+// ---------------------------------------------------------------------------
+
+import { ComboBox, LineEdit, Button, GroupBox } from "std-widgets.slint";
+import { Theme } from "theme.slint";
+import { Tooltip } from "tooltip.slint";
+
+export component SheetPanel inherits VerticalLayout {
+    spacing: 6px;
+
+    // -----------------------------------------------------------------------
+    // Properties bound from Rust
+    // -----------------------------------------------------------------------
+
+    // Table / gauge dropdown models
+    in property <[string]> table-names: [];
+    in property <[string]> gauge-keys: [];
+
+    // Selected indices (two-way between UI and Rust)
+    in-out property <int> selected-table-index: 0;
+    in-out property <int> selected-gauge-index: 0;
+    in-out property <string> gauge-text: "";
+    // Calculation mode: 0 = Gauge, 1 = PSF, 2 = Thickness
+    in-out property <int> calc-mode: 0;
+
+    // Input fields
+    in-out property <string> width-text: "";
+    in-out property <string> length-text: "";
+    in-out property <string> qty-text: "1";
+    in-out property <string> psf-text: "";
+    in-out property <string> thickness-text: "";
+
+    // Sheet results
+    in property <string> result-each-lb: "";
+    in property <string> result-total-lb: "";
+    in property <string> result-psf: "";
+    in property <string> result-area-each: "";
+    in property <string> result-area-total: "";
+
+    // Error message
+    in property <string> error-message: "";
+
+    // Pricing inputs
+    in-out property <int> price-mode-index: 0;     // 0=PerLb, 1=PerFt2, 2=PerSheet
+    in-out property <string> price-value-text: "";
+    in-out property <string> markup-text: "";
+    in-out property <string> tax-text: "";
+    in-out property <string> setup-fee-text: "";
+    in-out property <string> minimum-order-text: "";
+
+    // Pricing results
+    in property <string> cost-each-before-tax: "";
+    in property <string> cost-each-after-tax: "";
+    in property <string> cost-total-before-tax: "";
+    in property <string> cost-total-after-tax: "";
+    in property <string> cost-minimum-applied: "";
+    in property <string> pricing-error-message: "";
+
+    // Callbacks
+    callback table-changed(int);
+    callback gauge-edited(string);
+    callback gauge-accept(string);
+    callback calculate();
+    callback calculate-pricing();
+    callback clear-sheet();
+    callback advance-focus();
+
+    // -----------------------------------------------------------------------
+    // Sheet Calculation Section
+    // -----------------------------------------------------------------------
+
+    GroupBox {
+        title: "Sheet Calculation";
+
+        VerticalLayout {
+            spacing: 6px;
+            padding: 6px;
+
+            // -- Calculation Mode Selector --
+            HorizontalLayout {
+                spacing: Theme.spacing-lg;
+                alignment: start;
+                padding-top: Theme.spacing-sm;
+
+                Text {
+                    text: "Mode:";
+                    font-size: 12px;
+                    color: Theme.text-secondary;
+                    vertical-alignment: center;
+                }
+
+                mode-gauge-btn := Rectangle {
+                    width: 80px;
+                    height: 30px;
+                    border-radius: Theme.border-radius;
+                    background: root.calc-mode == 0 ? Theme.primary : Theme.surface-alt;
+                    border-width: 1px;
+                    border-color: root.calc-mode == 0 ? Theme.primary : Theme.border;
+
+                    Text {
+                        text: "Gauge";
+                        font-size: 12px;
+                        color: root.calc-mode == 0 ? Theme.surface : Theme.text-primary;
+                        horizontal-alignment: center;
+                        vertical-alignment: center;
+                    }
+
+                    TouchArea {
+                        clicked => {
+                            root.calc-mode = 0;
+                        }
+                    }
+                }
+
+                mode-psf-btn := Rectangle {
+                    width: 80px;
+                    height: 30px;
+                    border-radius: Theme.border-radius;
+                    background: root.calc-mode == 1 ? Theme.primary : Theme.surface-alt;
+                    border-width: 1px;
+                    border-color: root.calc-mode == 1 ? Theme.primary : Theme.border;
+
+                    Text {
+                        text: "PSF";
+                        font-size: 12px;
+                        color: root.calc-mode == 1 ? Theme.surface : Theme.text-primary;
+                        horizontal-alignment: center;
+                        vertical-alignment: center;
+                    }
+
+                    TouchArea {
+                        clicked => {
+                            root.calc-mode = 1;
+                        }
+                    }
+                }
+
+                mode-thickness-btn := Rectangle {
+                    width: 100px;
+                    height: 30px;
+                    border-radius: Theme.border-radius;
+                    background: root.calc-mode == 2 ? Theme.primary : Theme.surface-alt;
+                    border-width: 1px;
+                    border-color: root.calc-mode == 2 ? Theme.primary : Theme.border;
+
+                    Text {
+                        text: "Thickness";
+                        font-size: 12px;
+                        color: root.calc-mode == 2 ? Theme.surface : Theme.text-primary;
+                        horizontal-alignment: center;
+                        vertical-alignment: center;
+                    }
+
+                    TouchArea {
+                        clicked => {
+                            root.calc-mode = 2;
+                        }
+                    }
+                }
+            }
+
+            // -- Gauge Mode Inputs --
+            if root.calc-mode == 0 : HorizontalLayout {
+                spacing: Theme.spacing-md;
+                alignment: start;
+
+                Tooltip {
+                    tooltip-text: "Select the material table";
+                    VerticalLayout {
+                        spacing: 4px;
+                        Text {
+                            text: "Material Table";
+                            font-size: 12px;
+                            color: Theme.text-secondary;
+                            accessible-role: text;
+                            accessible-label: "Material table selection";
+                        }
+                        table-combo := ComboBox {
+                            model: root.table-names;
+                            current-index <=> root.selected-table-index;
+                            accessible-label: "Material table dropdown";
+                            selected(value) => {
+                                root.table-changed(self.current-index);
+                            }
+                        }
+                    }
+                }
+
+                Tooltip {
+                    tooltip-text: "Select the gauge or size from the table";
+                    VerticalLayout {
+                        spacing: 4px;
+                        Text {
+                            text: "Gauge";
+                            font-size: 12px;
+                            color: Theme.text-secondary;
+                            accessible-role: text;
+                            accessible-label: "Gauge key selection";
+                        }
+                        gauge-input := LineEdit {
+                            text <=> root.gauge-text;
+                            placeholder-text: "Type 18 or 3/16";
+                            accessible-label: "Gauge input";
+                            edited(text) => {
+                                root.gauge-edited(text);
+                            }
+                            key-pressed(event) => {
+                                if (!event.modifiers.control && !event.modifiers.shift && event.text == Key.Return) {
+                                    root.gauge-accept(self.text);
+                                    root.advance-focus();
+                                    return accept;
+                                }
+                                return reject;
+                            }
+                        }
+                    }
+                }
+            }
+
+            // -- PSF Mode Input --
+            if root.calc-mode == 1 : HorizontalLayout {
+                spacing: Theme.spacing-md;
+                alignment: start;
+
+                Tooltip {
+                    tooltip-text: "Enter weight per square foot (lb/ft²)";
+                    VerticalLayout {
+                        spacing: 4px;
+                        Text {
+                            text: "PSF (lb/ft²)";
+                            font-size: 12px;
+                            color: Theme.text-secondary;
+                            accessible-role: text;
+                            accessible-label: "PSF input";
+                        }
+                        psf-input := LineEdit {
+                            text <=> root.psf-text;
+                            placeholder-text: "e.g. 2.5";
+                            accessible-label: "PSF value input";
+                            key-pressed(event) => {
+                                if (!event.modifiers.control && !event.modifiers.shift && event.text == Key.Return) {
+                                    root.advance-focus();
+                                    return accept;
+                                }
+                                return reject;
+                            }
+                        }
+                    }
+                }
+            }
+
+            // -- Thickness Mode Input --
+            if root.calc-mode == 2 : HorizontalLayout {
+                spacing: Theme.spacing-md;
+                alignment: start;
+
+                Tooltip {
+                    tooltip-text: "Enter sheet thickness in inches";
+                    VerticalLayout {
+                        spacing: 4px;
+                        Text {
+                            text: "Thickness (in)";
+                            font-size: 12px;
+                            color: Theme.text-secondary;
+                            accessible-role: text;
+                            accessible-label: "Thickness input";
+                        }
+                        thickness-input := LineEdit {
+                            text <=> root.thickness-text;
+                            placeholder-text: "e.g. 0.0598";
+                            accessible-label: "Thickness value input";
+                            key-pressed(event) => {
+                                if (!event.modifiers.control && !event.modifiers.shift && event.text == Key.Return) {
+                                    root.advance-focus();
+                                    return accept;
+                                }
+                                return reject;
+                            }
+                        }
+                    }
+                }
+            }
+
+            // -- Dimensions row --
+            HorizontalLayout {
+                spacing: Theme.spacing-md;
+                alignment: start;
+
+                Tooltip {
+                    tooltip-text: "Enter sheet width in inches";
+                    VerticalLayout {
+                        spacing: 4px;
+                        Text {
+                            text: "Width (in)";
+                            font-size: 12px;
+                            color: Theme.text-secondary;
+                            accessible-role: text;
+                            accessible-label: "Width in inches";
+                        }
+                        width-input := LineEdit {
+                            text <=> root.width-text;
+                            placeholder-text: "e.g. 48";
+                            horizontal-stretch: 1;
+                            accessible-label: "Width input";
+                            key-pressed(event) => {
+                                if (!event.modifiers.control && !event.modifiers.shift && event.text == Key.Return) {
+                                    root.advance-focus();
+                                    return accept;
+                                }
+                                return reject;
+                            }
+                        }
+                    }
+                }
+
+                Tooltip {
+                    tooltip-text: "Enter sheet length in inches";
+                    VerticalLayout {
+                        spacing: 4px;
+                        Text {
+                            text: "Length (in)";
+                            font-size: 12px;
+                            color: Theme.text-secondary;
+                            accessible-role: text;
+                            accessible-label: "Length in inches";
+                        }
+                        length-input := LineEdit {
+                            text <=> root.length-text;
+                            placeholder-text: "e.g. 120";
+                            horizontal-stretch: 1;
+                            accessible-label: "Length input";
+                            key-pressed(event) => {
+                                if (!event.modifiers.control && !event.modifiers.shift && event.text == Key.Return) {
+                                    root.advance-focus();
+                                    return accept;
+                                }
+                                return reject;
+                            }
+                        }
+                    }
+                }
+
+                Tooltip {
+                    tooltip-text: "Enter number of sheets";
+                    VerticalLayout {
+                        spacing: 4px;
+                        Text {
+                            text: "Quantity";
+                            font-size: 12px;
+                            color: Theme.text-secondary;
+                            accessible-role: text;
+                            accessible-label: "Quantity";
+                        }
+                        qty-input := LineEdit {
+                            text <=> root.qty-text;
+                            placeholder-text: "1";
+                            horizontal-stretch: 1;
+                            accessible-label: "Quantity input";
+                            key-pressed(event) => {
+                                if (!event.modifiers.control && !event.modifiers.shift && event.text == Key.Return) {
+                                    root.advance-focus();
+                                    return accept;
+                                }
+                                return reject;
+                            }
+                        }
+                    }
+                }
+            }
+
+            // -- Calculate + Clear Buttons --
+            HorizontalLayout {
+                alignment: start;
+                spacing: Theme.spacing-sm;
+                padding-top: 4px;
+
+                calc-btn := Button {
+                    text: "Calculate";
+                    primary: true;
+                    accessible-label: "Calculate sheet weight";
+                    clicked => {
+                        root.calculate();
+                    }
+                }
+
+                clear-sheet-btn := Button {
+                    text: "Clear";
+                    accessible-label: "Clear all sheet fields";
+                    clicked => {
+                        root.clear-sheet();
+                    }
+                }
+            }
+
+            // -- Error display --
+            if root.error-message != "" : Rectangle {
+                background: #fdf0ef;
+                border-radius: Theme.border-radius;
+                border-width: 1px;
+                border-color: Theme.error;
+
+                VerticalLayout {
+                    padding: Theme.spacing-sm;
+
+                    error-text := Text {
+                        text: root.error-message;
+                        font-size: 12px;
+                        color: Theme.error;
+                        wrap: word-wrap;
+                        accessible-role: text;
+                        accessible-label: "Error: " + root.error-message;
+                    }
+                }
+            }
+
+            // -- Results display --
+            if root.result-each-lb != "" : Rectangle {
+                background: Theme.surface;
+                border-radius: Theme.border-radius;
+                border-width: 1px;
+                border-color: Theme.border;
+
+                results-layout := GridLayout {
+                    spacing: 4px;
+                    padding: 6px;
+
+                    Row {
+                        Text { text: "Each (lb):"; font-size: 12px; color: Theme.text-secondary; horizontal-alignment: right; }
+                        Text { text: root.result-each-lb; font-size: 12px; font-weight: 600; color: Theme.text-primary; }
+                    }
+                    Row {
+                        Text { text: "Total (lb):"; font-size: 12px; color: Theme.text-secondary; horizontal-alignment: right; }
+                        Text { text: root.result-total-lb; font-size: 12px; font-weight: 600; color: Theme.text-primary; }
+                    }
+                    Row {
+                        Text { text: "PSF (lb/ft²):"; font-size: 12px; color: Theme.text-secondary; horizontal-alignment: right; }
+                        Text { text: root.result-psf; font-size: 12px; font-weight: 600; color: Theme.text-primary; }
+                    }
+                    Row {
+                        Text { text: "Area each (ft²):"; font-size: 12px; color: Theme.text-secondary; horizontal-alignment: right; }
+                        Text { text: root.result-area-each; font-size: 12px; font-weight: 600; color: Theme.text-primary; }
+                    }
+                    Row {
+                        Text { text: "Area total (ft²):"; font-size: 12px; color: Theme.text-secondary; horizontal-alignment: right; }
+                        Text { text: root.result-area-total; font-size: 12px; font-weight: 600; color: Theme.text-primary; }
+                    }
+                }
+            }
+        }
+    }
+
+    // -----------------------------------------------------------------------
+    // Pricing Section
+    // -----------------------------------------------------------------------
+
+    GroupBox {
+        title: "Pricing";
+
+        VerticalLayout {
+            spacing: 6px;
+            padding: 6px;
+
+            HorizontalLayout {
+                spacing: Theme.spacing-md;
+                alignment: start;
+
+                Tooltip {
+                    tooltip-text: "Select pricing method: per pound, per square foot, or per sheet";
+                    VerticalLayout {
+                        spacing: 4px;
+                        Text {
+                            text: "Price Mode";
+                            font-size: 12px;
+                            color: Theme.text-secondary;
+                            accessible-role: text;
+                            accessible-label: "Price mode selection";
+                        }
+                        price-mode-combo := ComboBox {
+                            model: ["Per Lb", "Per Ft²", "Per Sheet"];
+                            current-index <=> root.price-mode-index;
+                            accessible-label: "Price mode dropdown";
+                        }
+                    }
+                }
+
+                Tooltip {
+                    tooltip-text: "Enter the unit price in dollars";
+                    VerticalLayout {
+                        spacing: 4px;
+                        Text {
+                            text: "Price Value ($)";
+                            font-size: 12px;
+                            color: Theme.text-secondary;
+                            accessible-role: text;
+                            accessible-label: "Price value";
+                        }
+                        price-input := LineEdit {
+                            text <=> root.price-value-text;
+                            placeholder-text: "0.00";
+                            accessible-label: "Price value input";
+                            key-pressed(event) => {
+                                if (!event.modifiers.control && !event.modifiers.shift && event.text == Key.Return) {
+                                    root.advance-focus();
+                                    return accept;
+                                }
+                                return reject;
+                            }
+                        }
+                    }
+                }
+
+                Tooltip {
+                    tooltip-text: "Enter markup as a percentage of base price";
+                    VerticalLayout {
+                        spacing: 4px;
+                        Text {
+                            text: "Markup (%)";
+                            font-size: 12px;
+                            color: Theme.text-secondary;
+                            accessible-role: text;
+                            accessible-label: "Markup percentage";
+                        }
+                        markup-input := LineEdit {
+                            text <=> root.markup-text;
+                            placeholder-text: "0";
+                            accessible-label: "Markup input";
+                            key-pressed(event) => {
+                                if (!event.modifiers.control && !event.modifiers.shift && event.text == Key.Return) {
+                                    root.advance-focus();
+                                    return accept;
+                                }
+                                return reject;
+                            }
+                        }
+                    }
+                }
+            }
+
+            HorizontalLayout {
+                spacing: Theme.spacing-md;
+                alignment: start;
+
+                Tooltip {
+                    tooltip-text: "Enter sales tax as a percentage";
+                    VerticalLayout {
+                        spacing: 4px;
+                        Text {
+                            text: "Tax (%)";
+                            font-size: 12px;
+                            color: Theme.text-secondary;
+                            accessible-role: text;
+                            accessible-label: "Tax percentage";
+                        }
+                        tax-input := LineEdit {
+                            text <=> root.tax-text;
+                            placeholder-text: "0";
+                            accessible-label: "Tax input";
+                            key-pressed(event) => {
+                                if (!event.modifiers.control && !event.modifiers.shift && event.text == Key.Return) {
+                                    root.advance-focus();
+                                    return accept;
+                                }
+                                return reject;
+                            }
+                        }
+                    }
+                }
+
+                Tooltip {
+                    tooltip-text: "Enter a flat setup fee in dollars";
+                    VerticalLayout {
+                        spacing: 4px;
+                        Text {
+                            text: "Setup Fee ($)";
+                            font-size: 12px;
+                            color: Theme.text-secondary;
+                            accessible-role: text;
+                            accessible-label: "Setup fee";
+                        }
+                        setup-input := LineEdit {
+                            text <=> root.setup-fee-text;
+                            placeholder-text: "0.00";
+                            accessible-label: "Setup fee input";
+                            key-pressed(event) => {
+                                if (!event.modifiers.control && !event.modifiers.shift && event.text == Key.Return) {
+                                    root.advance-focus();
+                                    return accept;
+                                }
+                                return reject;
+                            }
+                        }
+                    }
+                }
+
+                Tooltip {
+                    tooltip-text: "Enter minimum order amount in dollars";
+                    VerticalLayout {
+                        spacing: 4px;
+                        Text {
+                            text: "Minimum Order ($)";
+                            font-size: 12px;
+                            color: Theme.text-secondary;
+                            accessible-role: text;
+                            accessible-label: "Minimum order amount";
+                        }
+                        minimum-input := LineEdit {
+                            text <=> root.minimum-order-text;
+                            placeholder-text: "0.00";
+                            accessible-label: "Minimum order input";
+                            key-pressed(event) => {
+                                if (!event.modifiers.control && !event.modifiers.shift && event.text == Key.Return) {
+                                    root.advance-focus();
+                                    return accept;
+                                }
+                                return reject;
+                            }
+                        }
+                    }
+                }
+            }
+
+            // -- Calculate Pricing Button --
+            HorizontalLayout {
+                alignment: start;
+                padding-top: 4px;
+
+                pricing-btn := Button {
+                    text: "Calculate Pricing";
+                    accessible-label: "Calculate pricing";
+                    enabled: root.result-each-lb != "";
+                    clicked => {
+                        root.calculate-pricing();
+                    }
+                }
+            }
+
+            // -- Pricing Error display --
+            if root.pricing-error-message != "" : Rectangle {
+                background: #fdf0ef;
+                border-radius: Theme.border-radius;
+                border-width: 1px;
+                border-color: Theme.error;
+
+                VerticalLayout {
+                    padding: Theme.spacing-sm;
+
+                    pricing-error-text := Text {
+                        text: root.pricing-error-message;
+                        font-size: 12px;
+                        color: Theme.error;
+                        wrap: word-wrap;
+                        accessible-role: text;
+                        accessible-label: "Pricing error: " + root.pricing-error-message;
+                    }
+                }
+            }
+
+            // -- Pricing Results display --
+            if root.cost-each-before-tax != "" : Rectangle {
+                background: Theme.surface;
+                border-radius: Theme.border-radius;
+                border-width: 1px;
+                border-color: Theme.border;
+
+                cost-results-layout := GridLayout {
+                    spacing: 6px;
+                    padding: Theme.spacing-sm;
+
+                    Row {
+                        Text { text: "Each (before tax):"; font-size: 12px; color: Theme.text-secondary; horizontal-alignment: right; }
+                        Text { text: root.cost-each-before-tax; font-size: 12px; font-weight: 600; color: Theme.text-primary; }
+                    }
+                    Row {
+                        Text { text: "Each (after tax):"; font-size: 12px; color: Theme.text-secondary; horizontal-alignment: right; }
+                        Text { text: root.cost-each-after-tax; font-size: 12px; font-weight: 600; color: Theme.text-primary; }
+                    }
+                    Row {
+                        Text { text: "Total (before tax):"; font-size: 12px; color: Theme.text-secondary; horizontal-alignment: right; }
+                        Text { text: root.cost-total-before-tax; font-size: 12px; font-weight: 600; color: Theme.text-primary; }
+                    }
+                    Row {
+                        Text { text: "Total (after tax):"; font-size: 12px; color: Theme.text-secondary; horizontal-alignment: right; }
+                        Text { text: root.cost-total-after-tax; font-size: 12px; font-weight: 600; color: Theme.text-primary; }
+                    }
+                    Row {
+                        Text { text: "Minimum applied:"; font-size: 12px; color: Theme.text-secondary; horizontal-alignment: right; }
+                        Text { text: root.cost-minimum-applied; font-size: 12px; font-weight: 600; color: root.cost-minimum-applied == "Yes" ? Theme.accent : Theme.text-primary; }
+                    }
+                }
+            }
+        }
+    }
+}
