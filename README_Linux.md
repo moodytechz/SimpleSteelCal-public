@@ -1,68 +1,80 @@
-# Simple Steel Calculator - Linux Build and Install
+# Simple Steel Calculator - Linux Build, Install, and Release
 
-This project includes scripts to build and install a Linux package using PyInstaller.
+SteelCal ships on Linux as a portable Rust bundle. The public GitHub release
+publishes a `.tar.gz` archive, and the repo also includes local scripts for
+building and installing from source.
 
 ## Prerequisites
 
-On Debian/Ubuntu (or similar):
+On Debian or Ubuntu:
 
 ```bash
 sudo apt update
-sudo apt install -y python3 python3-venv python3-tk python3-pip build-essential
-python3 -m pip install --upgrade pip
-python3 -m pip install pyinstaller pandas openpyxl
+sudo apt install -y build-essential pkg-config libfontconfig1-dev
 ```
 
-Notes:
-- The app uses Tkinter; ensure `python3-tk` is installed.
-- If you want XLSX override tables, `pandas` and `openpyxl` are required.
+Install Rust with [rustup](https://rustup.rs/) if it is not already available.
 
-## Build
+## Build From Source
 
-From the project root:
+From the repository root:
 
 ```bash
-bash build_linux.sh          # one-file build (default)
-# or
-bash build_linux.sh onedir   # one-dir build
+bash build_linux.sh
 ```
 
-The output will be placed under `dist/linux`.
-
-Expected release artifacts:
+This stages the release payload under `dist/linux/`:
 
 - `dist/linux/SimpleSteelCalculator`
 - `dist/linux/steelcal-cli`
 - `dist/linux/assets/gauge_tables.override.json`
 
+## Package A Release Archive
+
+To create the same style of portable archive used by GitHub Releases:
+
+```bash
+bash package_unix_release.sh linux
+```
+
+Expected archive name:
+
+- `dist/linux/SimpleSteelCalculator-<version>-linux-<arch>.tar.gz`
+
 ## Install
 
-User-level install (no sudo required):
+You can install either from a local source build or from an extracted release
+archive. In both cases, run the installer script from the directory that
+contains `install_linux.sh` and the packaged binaries:
 
 ```bash
 bash install_linux.sh
 ```
 
-System-wide install (requires sudo):
+System-wide install:
 
 ```bash
-bash install_linux.sh --system
+sudo bash install_linux.sh --system
 ```
 
-This will:
-- Copy the built app to `~/.local/opt/simple-steel-calculator` (or `/opt/simple-steel-calculator` for system install).
-- Create a launcher symlink at `~/.local/bin/simple-steel-calculator` (or `/usr/local/bin/simple-steel-calculator`).
-- Install a desktop entry so you can launch it from the system menu.
+This installs the app under `~/.local/opt/simple-steel-calculator` by default,
+creates `~/.local/bin/simple-steel-calculator`, and installs a desktop entry so
+the app appears in your launcher.
 
 ## Running
 
-After install, run:
+After install:
 
 ```bash
 simple-steel-calculator
 ```
 
-or use your Desktop Environment’s application menu.
+The portable bundle can also be run directly without installation:
+
+```bash
+./SimpleSteelCalculator
+./steelcal-cli --help
+```
 
 ## Uninstall
 
@@ -72,49 +84,20 @@ User-level uninstall:
 rm -f ~/.local/bin/simple-steel-calculator
 rm -rf ~/.local/opt/simple-steel-calculator
 rm -f ~/.local/share/applications/simple-steel-calculator.desktop
-rm -f ~/.local/share/icons/simple-steel-calculator.png
-update-desktop-database ~/.local/share/applications || true
+update-desktop-database ~/.local/share/applications >/dev/null 2>&1 || true
 ```
 
-System-wide uninstall (requires sudo):
+System-wide uninstall:
 
 ```bash
 sudo rm -f /usr/local/bin/simple-steel-calculator
 sudo rm -rf /opt/simple-steel-calculator
 sudo rm -f /usr/share/applications/simple-steel-calculator.desktop
-sudo rm -f /usr/share/icons/hicolor/256x256/apps/simple-steel-calculator.png
-sudo update-desktop-database || true
+sudo update-desktop-database >/dev/null 2>&1 || true
 ```
 
 ## Notes
-- Linux uses the in-app Tk splash fallback rather than the Windows bootloader splash.
-- Writable configuration is stored under `~/.SimpleSteelCalculator/steel_calc_config.json`. On first launch, a legacy sidecar `steel_calc_config.json` next to the binary is imported into that folder once.
-- Data files included in the build: `lbs_ft_table.xlsx` and `steel_calc_config.json`.
-- To override gauge tables, place `lbs_ft_table.xlsx` next to the installed binary.
-- If you see a blank window on Wayland, try launching with `XDG_SESSION_TYPE=x11`. Most DEs work out-of-the-box.
 
-## Runtime quick reference
-
-- Main buttons: `Calculate Sheet & Quote`, `Calculate Scrap/Pickup`, `Calculate Coil`, and `Clear`.
-- Help menu commands: `User Guide`, `View History`, `Edit Configuration…`, and `About`.
-- Sheet calculations support three input modes: gauge/size, direct `lb/ft²`, or manual thickness.
-- Coil inputs are `Coil Width`, `Coil Thickness`, `Coil ID`, and `Coil Weight`. The app computes `Coil Footage`, `PIW`, and `Coil OD`; it does not accept PIW, OD, or footage as coil inputs.
-- Enable `Show Summary Popups` to open a copyable summary dialog after calculations.
-- `View History` supports search, type filtering, `Recall`, and `Export`.
-- History is kept in memory for the current session until you export it to `~/.SimpleSteelCalculator/history.log`.
-- The active configuration file is `~/.SimpleSteelCalculator/steel_calc_config.json`.
-
-## Examples
-- Sheet example: Material HR/HRPO/CR, Gauge 16, Width 48 in, Length 96 in, Qty 10. Click "Calculate Sheet & Quote".
-- Coil example: Coil Width 48 in, Coil Thickness 0.060 in, Coil ID 20 in, Coil Weight 2000 lb. Click "Calculate Coil" to compute footage, PIW, and OD.
-- Costing example: Mode per lb, Price $0.60, Markup 15%, Tax 6%, Fees $25. Click "Calculate Sheet & Quote".
-- Sample config to change defaults:
-  {
-    "default_table": "GALV/JK/BOND",
-    "default_gauge": "20"
-  }
-- Sample config to adjust UI scaling:
-  {
-    "ui_scaling": 1.2,
-    "ui_font_size": 13
-  }
+- Writable configuration lives at `~/.SimpleSteelCalculator/steel_calc_config.json`.
+- The bundled `assets/gauge_tables.override.json` file is optional override data.
+- The Linux release asset is a portable archive, not an AppImage or distro-native package.

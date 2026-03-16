@@ -114,7 +114,13 @@ pub fn open_config_location(app: &AppWindow) {
                     .arg(dir.as_os_str())
                     .spawn();
             }
-            #[cfg(not(windows))]
+            #[cfg(target_os = "macos")]
+            {
+                let _ = std::process::Command::new("open")
+                    .arg(dir.as_os_str())
+                    .spawn();
+            }
+            #[cfg(all(not(windows), not(target_os = "macos")))]
             {
                 let _ = std::process::Command::new("xdg-open")
                     .arg(dir.as_os_str())

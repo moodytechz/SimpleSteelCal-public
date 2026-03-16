@@ -55,3 +55,24 @@ jobs:
 
       - name: Smoke test scrap batch CLI JSON output
         run: cargo run -p steelcal-cli -- --input-file fixtures/batch/scrap-batch-happy-path.json --json
+
+  desktop-release-builds:
+    strategy:
+      fail-fast: false
+      matrix:
+        os:
+          - windows-latest
+          - macos-latest
+    runs-on: ${{ matrix.os }}
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v5
+
+      - name: Install stable Rust
+        uses: dtolnay/rust-toolchain@stable
+
+      - name: Cache cargo
+        uses: Swatinem/rust-cache@v2
+
+      - name: Build desktop and CLI release binaries
+        run: cargo build --release -p steelcal-desktop -p steelcal-cli

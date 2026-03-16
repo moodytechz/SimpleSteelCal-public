@@ -256,7 +256,7 @@ Or build a release binary:
 cargo build -p steelcal-desktop --release
 ```
 
-The release binary is named `SimpleSteelCalculator` (`SimpleSteelCalculator.exe` on Windows). On Windows, the binary includes PE metadata (icon, version info, company name) embedded via `winresource` in `build.rs`.
+The release binary is named `SimpleSteelCalculator` (`SimpleSteelCalculator.exe` on Windows). On Windows, the binary includes PE metadata such as version information and company name embedded via `winresource` in `build.rs`.
 
 The desktop app provides a tabbed interface with Sheet, Coil, and Scrap panels. The Sheet panel supports gauge/PSF/thickness input modes and includes a pricing section. Gauge table and gauge key dropdowns are populated from the built-in tables and any overrides.
 
@@ -357,6 +357,25 @@ Builds release binaries and stages them under `dist/linux/` with the same layout
 ```
 bash build_linux.sh
 ```
+
+### build_macos.sh
+
+Builds release binaries and stages them under `dist/macos/` for portable macOS packaging.
+
+```
+bash build_macos.sh
+```
+
+### Tagged GitHub Releases
+
+Pushing a `v*` tag in the public repository publishes platform assets to a single GitHub Release:
+
+- Windows installer: `SimpleSteelCalculator-<version>-x64-Setup.exe`
+- Windows portable zip: `SimpleSteelCalculator-<version>-portable.zip`
+- Linux portable archive: `SimpleSteelCalculator-<version>-linux-<arch>.tar.gz`
+- macOS portable archive: `SimpleSteelCalculator-<version>-macos-<arch>.tar.gz`
+
+The Linux and macOS archives contain the GUI binary, the CLI binary, bundled assets, license files, and platform-specific release notes. The macOS archive is a portable unsigned bundle rather than a notarized `.app` or `.dmg`.
 
 ### Inno Setup Installer (Windows)
 

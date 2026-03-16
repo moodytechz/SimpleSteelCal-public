@@ -1,21 +1,19 @@
 #!/usr/bin/env bash
-# Build Simple Steel Calculator for Linux (Rust).
-# Usage: bash build_linux.sh
+# Build Simple Steel Calculator for macOS (Rust).
+# Usage: bash build_macos.sh
 set -euo pipefail
 
 REPO_ROOT="$(cd "$(dirname "$0")" && pwd)"
-DIST_DIR="$REPO_ROOT/dist/linux"
+DIST_DIR="$REPO_ROOT/dist/macos"
 BUNDLE_NAME="SimpleSteelCalculator"
 ASSETS_DIR="$DIST_DIR/assets"
 
-# ── Cargo release build ────────────────────────────────────────────────
 echo "Building steelcal-desktop (release)..."
 cargo build --release -p steelcal-desktop
 
 echo "Building steelcal-cli (release)..."
 cargo build --release -p steelcal-cli
 
-# ── Stage binaries and assets ──────────────────────────────────────────
 rm -rf "$DIST_DIR"
 mkdir -p "$DIST_DIR"
 mkdir -p "$ASSETS_DIR"
@@ -35,14 +33,13 @@ fi
 
 echo "Staging binaries to $DIST_DIR ..."
 cp "$DESKTOP_BIN" "$DIST_DIR/"
-cp "$CLI_BIN"     "$DIST_DIR/"
+cp "$CLI_BIN" "$DIST_DIR/"
 
 if [ -f "$OVERRIDE_JSON" ]; then
     echo "Staging assets..."
     cp "$OVERRIDE_JSON" "$ASSETS_DIR/"
 fi
 
-# ── Summary ────────────────────────────────────────────────────────────
 echo ""
 echo "Build complete."
 echo "Staging directory: $DIST_DIR"

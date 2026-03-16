@@ -3,11 +3,10 @@
 # Usage: bash install_linux.sh [--system]
 set -euo pipefail
 
+SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
 APP_NAME="SimpleSteelCalculator"
 BIN_NAME="simple-steel-calculator"
-DIST_DIR="dist/linux"
-MODE_FILE="$DIST_DIR/$APP_NAME"
-MODE_DIR="$DIST_DIR/$APP_NAME/$APP_NAME"
+DIST_DIR="$SCRIPT_DIR/dist/linux"
 DESKTOP_FILE="$HOME/.local/share/applications/simple-steel-calculator.desktop"
 TARGET_DIR="$HOME/.local/opt/simple-steel-calculator"
 TARGET_BIN="$HOME/.local/bin/$BIN_NAME"
@@ -20,19 +19,29 @@ if [[ ${1:-} == "--system" ]]; then
   DESKTOP_FILE="/usr/share/applications/simple-steel-calculator.desktop"
 fi
 
-mkdir -p "$(dirname "$TARGET_BIN")"
-
-# Determine build type and source path
-if [[ -f "$MODE_FILE" ]]; then
-  SRC_APP="$MODE_FILE"
-  LAUNCH_CMD="$TARGET_DIR/$APP_NAME"
-elif [[ -d "$DIST_DIR/$APP_NAME" ]]; then
-  SRC_APP_DIR="$DIST_DIR/$APP_NAME"
-  LAUNCH_CMD="$TARGET_DIR/$APP_NAME/$APP_NAME"
+# Determine source layout from either the repo staging directory or an extracted release bundle.
+if [[ -f "$DIST_DIR/$APP_NAME" || -d "$DIST_DIR/$APP_NAME" ]]; then
+  SOURCE_ROOT="$DIST_DIR"
+elif [[ -f "$SCRIPT_DIR/$APP_NAME" || -d "$SCRIPT_DIR/$APP_NAME" ]]; then
+  SOURCE_ROOT="$SCRIPT_DIR"
 else
-  echo "Error: Build not found in $DIST_DIR. Run build_linux.sh first." >&2
+  echo "Error: Build not found. Run build_linux.sh first or extract a release archive." >&2
   exit 1
 fi
+
+if [[ -f "$SOURCE_ROOT/$APP_NAME" ]]; then
+  SRC_APP="$SOURCE_ROOT/$APP_NAME"
+  LAUNCH_CMD="$TARGET_DIR/$APP_NAME"
+elif [[ -d "$SOURCE_ROOT/$APP_NAME" ]]; then
+  SRC_APP_DIR="$SOURCE_ROOT/$APP_NAME"
+  LAUNCH_CMD="$TARGET_DIR/$APP_NAME/$APP_NAME"
+else
+  echo "Error: App payload not found under $SOURCE_ROOT." >&2
+  exit 1
+fi
+
+SRC_CLI="$SOURCE_ROOT/steelcal-cli"
+SRC_ASSETS_DIR="$SOURCE_ROOT/assets"
 
 # Copy files
 sudo_cmd() {
@@ -43,12 +52,23 @@ sudo_cmd() {
   fi
 }
 
+sudo_cmd mkdir -p "$(dirname "$TARGET_BIN")"
 sudo_cmd mkdir -p "$TARGET_DIR"
+sudo_cmd mkdir -p "$(dirname "$DESKTOP_FILE")"
 if [[ -n ${SRC_APP:-} ]]; then
   sudo_cmd install -m 755 "$SRC_APP" "$TARGET_DIR/$APP_NAME"
 else
   sudo_cmd rm -rf "$TARGET_DIR/$APP_NAME"
   sudo_cmd cp -a "$SRC_APP_DIR" "$TARGET_DIR/"
+fi
+
+if [[ -f "$SRC_CLI" ]]; then
+  sudo_cmd install -m 755 "$SRC_CLI" "$TARGET_DIR/steelcal-cli"
+fi
+
+if [[ -d "$SRC_ASSETS_DIR" ]]; then
+  sudo_cmd rm -rf "$TARGET_DIR/assets"
+  sudo_cmd cp -a "$SRC_ASSETS_DIR" "$TARGET_DIR/"
 fi
 
 # Symlink launcher
