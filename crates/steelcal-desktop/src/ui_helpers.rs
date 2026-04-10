@@ -48,8 +48,7 @@ fn normalize_gauge_search_token(input: &str) -> String {
         .replace("inches", "")
         .replace("inch", "")
         .replace("in.", "")
-        .replace('"', "")
-        .replace(' ', "")
+        .replace(['"', ' '], "")
 }
 
 fn gauge_search_numeric(input: &str) -> Option<f64> {
@@ -331,7 +330,11 @@ fn json_str(value: &serde_json::Value, key: &str) -> String {
 }
 
 /// Recall a Sheet history entry: restore all sheet panel fields.
-pub fn recall_sheet_entry(app: &AppWindow, inputs: &serde_json::Value, tables: Option<&GaugeTables>) {
+pub fn recall_sheet_entry(
+    app: &AppWindow,
+    inputs: &serde_json::Value,
+    tables: Option<&GaugeTables>,
+) {
     app.set_width_text(json_str(inputs, "width").into());
     app.set_length_text(json_str(inputs, "length").into());
     app.set_qty_text(json_str(inputs, "qty").into());

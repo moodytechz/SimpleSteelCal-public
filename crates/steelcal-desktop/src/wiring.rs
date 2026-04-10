@@ -5,11 +5,11 @@ use slint::ComponentHandle;
 use steelcal_core::history::SessionHistory;
 
 use crate::handlers::{
-    calculate_coil, calculate_pricing, calculate_scrap, calculate_sheet, clear_coil,
-    clear_scrap, clear_sheet, copy_to_actual, copy_to_ending, export_history, open_about,
-    open_config_editor, open_config_location, open_help, open_history, recall_history_entry,
-    refresh_history_filter, restore_config_defaults, revert_config_editor, save_config_editor,
-    select_history_entry, validate_config_editor,
+    calculate_coil, calculate_pricing, calculate_scrap, calculate_sheet, clear_coil, clear_scrap,
+    clear_sheet, copy_to_actual, copy_to_ending, export_history, open_about, open_config_editor,
+    open_config_location, open_help, open_history, recall_history_entry, refresh_history_filter,
+    restore_config_defaults, revert_config_editor, save_config_editor, select_history_entry,
+    validate_config_editor,
 };
 use crate::ui_helpers::{
     current_table_name, find_best_gauge_match, focus_gauge_field, gauge_keys_for_table,

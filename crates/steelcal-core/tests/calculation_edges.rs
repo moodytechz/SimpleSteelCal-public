@@ -1,4 +1,6 @@
-use steelcal_core::{compute_coil, compute_costs, compute_scrap, CoilInputs, CostInputs, PriceMode};
+use steelcal_core::{
+    compute_coil, compute_costs, compute_scrap, CoilInputs, CostInputs, PriceMode,
+};
 
 #[test]
 fn compute_coil_requires_width_when_weight_is_present() {

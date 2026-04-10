@@ -1,7 +1,9 @@
 use std::path::{Path, PathBuf};
 
 use steelcal_core::config::{config_path, effective_config, load_normalized_config};
-use steelcal_core::gauges::{builtin_gauge_tables, load_override_tables, merge_tables, GaugeTables};
+use steelcal_core::gauges::{
+    builtin_gauge_tables, load_override_tables, merge_tables, GaugeTables,
+};
 use steelcal_core::{APP_COPYRIGHT, APP_VERSION};
 
 use crate::ui_helpers::{find_index, gauge_keys_for_table, table_names_from};
@@ -22,7 +24,10 @@ pub struct InitialModels {
 
 pub fn resolve_override_path(current_exe: Option<&Path>) -> PathBuf {
     current_exe
-        .and_then(|exe| exe.parent().map(|dir| dir.join("assets/gauge_tables.override.json")))
+        .and_then(|exe| {
+            exe.parent()
+                .map(|dir| dir.join("assets/gauge_tables.override.json"))
+        })
         .unwrap_or_else(|| Path::new("assets/gauge_tables.override.json").to_path_buf())
 }
 
@@ -86,7 +91,8 @@ pub fn apply_initial_ui(app: &AppWindow, cfg: &InitialConfig, models: &InitialMo
     app.set_app_version(APP_VERSION.into());
     app.set_app_copyright(APP_COPYRIGHT.into());
 
-    let table_model: Vec<slint::SharedString> = models.table_names.iter().map(|s| s.into()).collect();
+    let table_model: Vec<slint::SharedString> =
+        models.table_names.iter().map(|s| s.into()).collect();
     app.set_table_names(slint::ModelRc::from(table_model.as_slice()));
     app.set_selected_table_index(models.default_table_idx);
 

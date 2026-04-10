@@ -468,8 +468,13 @@ fn batch_output_file_writes_combined_csv_for_success_rows() {
     let output_file = temp_csv_output_path("batch-success");
     let output_file_str = output_file.display().to_string();
 
-    let (code, stdout, stderr) =
-        run_cli(&["--input-file", &input_file, "--json", "--output-file", &output_file_str]);
+    let (code, stdout, stderr) = run_cli(&[
+        "--input-file",
+        &input_file,
+        "--json",
+        "--output-file",
+        &output_file_str,
+    ]);
     assert_eq!(
         code, 0,
         "expected exit 0 for batch CSV export\nstdout: {stdout}\nstderr: {stderr}"
@@ -498,8 +503,13 @@ fn batch_output_file_writes_error_message_for_failed_rows() {
     let output_file = temp_csv_output_path("batch-partial");
     let output_file_str = output_file.display().to_string();
 
-    let (code, stdout, stderr) =
-        run_cli(&["--input-file", &input_file, "--json", "--output-file", &output_file_str]);
+    let (code, stdout, stderr) = run_cli(&[
+        "--input-file",
+        &input_file,
+        "--json",
+        "--output-file",
+        &output_file_str,
+    ]);
     assert_eq!(
         code, 0,
         "expected exit 0 for partial-success batch CSV export\nstdout: {stdout}\nstderr: {stderr}"
@@ -857,7 +867,11 @@ fn run_fixture_by_name(name: &str) {
 }
 
 fn run_fixture(case: &FixtureCase) {
-    let expanded_args: Vec<String> = case.args.iter().map(|arg| expand_fixture_arg(arg)).collect();
+    let expanded_args: Vec<String> = case
+        .args
+        .iter()
+        .map(|arg| expand_fixture_arg(arg))
+        .collect();
     let args_str: Vec<&str> = expanded_args.iter().map(|s| s.as_str()).collect();
     let (code, stdout, stderr) = run_cli(&args_str);
 
@@ -965,7 +979,12 @@ fn compare_json_subset(
 
             for (index, expected_item) in expected_items.iter().enumerate() {
                 let child_path = format!("{path}[{index}]");
-                compare_json_subset(expected_item, &actual_items[index], fixture_name, &child_path);
+                compare_json_subset(
+                    expected_item,
+                    &actual_items[index],
+                    fixture_name,
+                    &child_path,
+                );
             }
         }
     }

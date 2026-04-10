@@ -1,16 +1,16 @@
 #![windows_subsystem = "windows"]
 
-mod startup;
 mod handlers;
 mod init;
+mod startup;
 mod ui_helpers;
 mod wiring;
 
 slint::include_modules!();
 
+use init::{apply_initial_ui, build_initial_models, load_initial_config, load_tables};
 use steelcal_core::gauges::GaugeTables;
 use steelcal_core::history::SessionHistory;
-use init::{apply_initial_ui, build_initial_models, load_initial_config, load_tables};
 
 use std::cell::RefCell;
 use std::rc::Rc;

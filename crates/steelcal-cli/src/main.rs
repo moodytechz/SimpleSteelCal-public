@@ -191,7 +191,10 @@ struct Args {
     input_file: Option<String>,
 
     /// Write batch results to a CSV file while keeping JSON on stdout.
-    #[arg(long, help = "Write batch results to a CSV file while keeping JSON on stdout")]
+    #[arg(
+        long,
+        help = "Write batch results to a CSV file while keeping JSON on stdout"
+    )]
     output_file: Option<String>,
 
     /// List all available gauge table names and exit.
@@ -296,10 +299,7 @@ fn run(args: Args) -> anyhow::Result<()> {
 
     // Resolve table: --table flag overrides config's default_table, which itself
     // falls back to DEFAULT_TABLE_NAME.
-    let resolved_table = args
-        .table
-        .clone()
-        .unwrap_or_else(|| effective_config.default_table.clone());
+    let resolved_table = resolve_table_name(args.table.clone(), &effective_config.default_table);
 
     // --- Conflict detection: --gauge + --psf ---
     if args.gauge.is_some() && args.psf.is_some() {
@@ -566,9 +566,16 @@ fn format_currency(value: f64) -> String {
     format!("{sign}{grouped}.{fraction}")
 }
 
+fn resolve_table_name(args_table: Option<String>, default_table: &str) -> String {
+    args_table.unwrap_or_else(|| default_table.to_string())
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    use steelcal_core::config;
+    use steelcal_core::gauges::{builtin_gauge_tables, DEFAULT_TABLE_NAME};
 
     // ---- format_currency tests ----
 
@@ -649,46 +656,34 @@ mod tests {
         assert_eq!(format_currency(1_234_567_890.12), "1,234,567,890.12");
     }
 
+    fn effective_config_with_default_table(default_table: Option<&str>) -> config::EffectiveConfig {
+        let tables = builtin_gauge_tables();
+        let config_map = default_table.map_or_else(serde_json::Map::new, |default_table| {
+            serde_json::from_value(serde_json::json!({
+                "default_table": default_table
+            }))
+            .unwrap()
+        });
+
+        config::effective_config(&config_map, &tables)
+    }
+
     // ---- table option resolution tests ----
 
     /// When --table is not provided, effective_config.default_table is used.
     #[test]
     fn table_none_uses_config_default_table() {
-        use steelcal_core::config;
-        use steelcal_core::gauges::builtin_gauge_tables;
-
-        let tables = builtin_gauge_tables();
-        // Build a config map that sets default_table to "STAINLESS"
-        let config_map: serde_json::Map<String, serde_json::Value> =
-            serde_json::from_value(serde_json::json!({
-                "default_table": "STAINLESS"
-            }))
-            .unwrap();
-        let effective = config::effective_config(&config_map, &tables);
-
-        // Simulate args.table being None (--table not provided on CLI)
-        let args_table: Option<String> = None;
-        let resolved = args_table.unwrap_or_else(|| effective.default_table.clone());
+        let effective = effective_config_with_default_table(Some("STAINLESS"));
+        let resolved = resolve_table_name(None, &effective.default_table);
         assert_eq!(resolved, "STAINLESS");
     }
 
     /// When --table is provided, it overrides the config's default_table.
     #[test]
     fn table_some_overrides_config_default_table() {
-        use steelcal_core::config;
-        use steelcal_core::gauges::builtin_gauge_tables;
-
-        let tables = builtin_gauge_tables();
-        let config_map: serde_json::Map<String, serde_json::Value> =
-            serde_json::from_value(serde_json::json!({
-                "default_table": "STAINLESS"
-            }))
-            .unwrap();
-        let effective = config::effective_config(&config_map, &tables);
-
-        // Simulate args.table being Some (--table provided on CLI)
-        let args_table: Option<String> = Some("GALV/JK/BOND".to_string());
-        let resolved = args_table.unwrap_or_else(|| effective.default_table.clone());
+        let effective = effective_config_with_default_table(Some("STAINLESS"));
+        let resolved =
+            resolve_table_name(Some("GALV/JK/BOND".to_string()), &effective.default_table);
         assert_eq!(resolved, "GALV/JK/BOND");
     }
 
@@ -696,16 +691,8 @@ mod tests {
     /// DEFAULT_TABLE_NAME is used via effective_config's fallback.
     #[test]
     fn table_none_no_config_uses_builtin_default() {
-        use steelcal_core::config;
-        use steelcal_core::gauges::{builtin_gauge_tables, DEFAULT_TABLE_NAME};
-
-        let tables = builtin_gauge_tables();
-        // Empty config map - no default_table set
-        let config_map = serde_json::Map::new();
-        let effective = config::effective_config(&config_map, &tables);
-
-        let args_table: Option<String> = None;
-        let resolved = args_table.unwrap_or_else(|| effective.default_table.clone());
+        let effective = effective_config_with_default_table(None);
+        let resolved = resolve_table_name(None, &effective.default_table);
         assert_eq!(resolved, DEFAULT_TABLE_NAME);
     }
 }

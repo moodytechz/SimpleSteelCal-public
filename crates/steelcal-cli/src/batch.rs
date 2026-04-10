@@ -7,8 +7,8 @@ use serde::{Deserialize, Serialize};
 use steelcal_core::config;
 use steelcal_core::gauges::{builtin_gauge_tables, normalize_table_name};
 use steelcal_core::{
-    compute_coil, compute_each_total_psf, compute_scrap, CoilInputs, CoilResult, InputMode,
-    Inputs, ScrapResult, SheetResult,
+    compute_coil, compute_each_total_psf, compute_scrap, CoilInputs, CoilResult, InputMode, Inputs,
+    ScrapResult, SheetResult,
 };
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Deserialize)]
@@ -297,7 +297,14 @@ pub fn run_batch(input_file: &str, output_file: Option<&str>, json: bool) -> any
         };
 
         match record.parse_error.clone().map_or_else(
-            || run_batch_record(&record.kind, &tables, &effective_config.default_table, &effective_config.default_gauge),
+            || {
+                run_batch_record(
+                    &record.kind,
+                    &tables,
+                    &effective_config.default_table,
+                    &effective_config.default_gauge,
+                )
+            },
             |error| Err(anyhow!(error)),
         ) {
             Ok(mut success) => {
@@ -454,22 +461,14 @@ fn write_batch_csv(path: &str, rows: &[ExportRow]) -> anyhow::Result<()> {
     Ok(())
 }
 
-fn opt_num_or_raw(
-    value: Option<f64>,
-    raw_fields: &BTreeMap<String, String>,
-    key: &str,
-) -> String {
+fn opt_num_or_raw(value: Option<f64>, raw_fields: &BTreeMap<String, String>, key: &str) -> String {
     value
         .map(|v| v.to_string())
         .or_else(|| raw_fields.get(key).cloned())
         .unwrap_or_default()
 }
 
-fn opt_i32_or_raw(
-    value: Option<i32>,
-    raw_fields: &BTreeMap<String, String>,
-    key: &str,
-) -> String {
+fn opt_i32_or_raw(value: Option<i32>, raw_fields: &BTreeMap<String, String>, key: &str) -> String {
     value
         .map(|v| v.to_string())
         .or_else(|| raw_fields.get(key).cloned())
@@ -529,7 +528,9 @@ fn build_sheet_inputs(
 
 fn build_coil_inputs(job: &BatchCoilJob) -> anyhow::Result<CoilInputs> {
     Ok(CoilInputs {
-        coil_width_in: job.coil_width.ok_or_else(|| anyhow!("coil_width is required"))?,
+        coil_width_in: job
+            .coil_width
+            .ok_or_else(|| anyhow!("coil_width is required"))?,
         coil_thickness_in: job
             .coil_thickness
             .ok_or_else(|| anyhow!("coil_thickness is required"))?,
@@ -549,7 +550,8 @@ fn build_scrap_result(job: &BatchScrapJob) -> anyhow::Result<ScrapResult> {
             .ok_or_else(|| anyhow!("actual_weight is required"))?,
         job.ending_weight
             .ok_or_else(|| anyhow!("ending_weight is required"))?,
-        job.base_cost.ok_or_else(|| anyhow!("base_cost is required"))?,
+        job.base_cost
+            .ok_or_else(|| anyhow!("base_cost is required"))?,
         job.processing_cost
             .ok_or_else(|| anyhow!("processing_cost is required"))?,
     )

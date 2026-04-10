@@ -86,10 +86,7 @@ const KNOWN_CONFIG_KEYS: &[&str] = &[
 pub fn normalize_config(raw: &Map<String, Value>, tables: &GaugeTables) -> Map<String, Value> {
     let mut cleaned = Map::new();
 
-    cleaned.insert(
-        "config_version".to_string(),
-        json!(CONFIG_SCHEMA_VERSION),
-    );
+    cleaned.insert("config_version".to_string(), json!(CONFIG_SCHEMA_VERSION));
 
     // Warn about unknown keys
     for key in raw.keys() {

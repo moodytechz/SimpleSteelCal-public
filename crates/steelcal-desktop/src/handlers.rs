@@ -216,66 +216,79 @@ pub fn save_config_editor(
     app.set_config_editor_status_is_error(false);
 }
 
-fn build_sheet_history_inputs(
+struct SheetHistoryInputs<'a> {
     width: f64,
     length: f64,
     qty: i32,
     calc_mode: i32,
-    table_names: &[String],
-    gauge_keys: &[String],
+    table_names: &'a [String],
+    gauge_keys: &'a [String],
     selected_table_index: i32,
-    gauge_text: &str,
+    gauge_text: &'a str,
     selected_gauge_index: i32,
-    psf_text: &str,
-    thickness_text: &str,
+    psf_text: &'a str,
+    thickness_text: &'a str,
     price_mode_index: i32,
-    price_value_text: &str,
-    markup_text: &str,
-    tax_text: &str,
-    setup_fee_text: &str,
-    minimum_order_text: &str,
-) -> serde_json::Value {
-    let mut inputs = serde_json::Map::new();
-    inputs.insert("width".into(), serde_json::json!(width));
-    inputs.insert("length".into(), serde_json::json!(length));
-    inputs.insert("qty".into(), serde_json::json!(qty));
+    price_value_text: &'a str,
+    markup_text: &'a str,
+    tax_text: &'a str,
+    setup_fee_text: &'a str,
+    minimum_order_text: &'a str,
+}
 
-    match calc_mode {
+fn build_sheet_history_inputs(params: SheetHistoryInputs<'_>) -> serde_json::Value {
+    let mut inputs = serde_json::Map::new();
+    inputs.insert("width".into(), serde_json::json!(params.width));
+    inputs.insert("length".into(), serde_json::json!(params.length));
+    inputs.insert("qty".into(), serde_json::json!(params.qty));
+
+    match params.calc_mode {
         0 => {
-            let table = table_names
-                .get(selected_table_index as usize)
+            let table = params
+                .table_names
+                .get(params.selected_table_index as usize)
                 .cloned()
                 .unwrap_or_default();
-            let gauge = resolve_gauge_index(gauge_keys, gauge_text, selected_gauge_index)
-                .and_then(|index| gauge_keys.get(index).cloned())
-                .unwrap_or_else(|| gauge_text.to_string());
+            let gauge = resolve_gauge_index(
+                params.gauge_keys,
+                params.gauge_text,
+                params.selected_gauge_index,
+            )
+            .and_then(|index| params.gauge_keys.get(index).cloned())
+            .unwrap_or_else(|| params.gauge_text.to_string());
             inputs.insert("table".into(), serde_json::json!(table));
             inputs.insert("gauge".into(), serde_json::json!(gauge));
             inputs.insert("input_mode".into(), serde_json::json!("gauge"));
         }
         1 => {
-            inputs.insert("psf".into(), serde_json::json!(psf_text));
+            inputs.insert("psf".into(), serde_json::json!(params.psf_text));
             inputs.insert("input_mode".into(), serde_json::json!("psf"));
         }
         2 => {
-            inputs.insert("thickness".into(), serde_json::json!(thickness_text));
+            inputs.insert("thickness".into(), serde_json::json!(params.thickness_text));
             inputs.insert("input_mode".into(), serde_json::json!("thickness"));
         }
         _ => {}
     }
 
-    let price_mode = match price_mode_index {
+    let price_mode = match params.price_mode_index {
         0 => "per_lb",
         1 => "per_ft2",
         2 => "per_sheet",
         _ => "unknown",
     };
     inputs.insert("price_mode".into(), serde_json::json!(price_mode));
-    inputs.insert("price_value".into(), serde_json::json!(price_value_text));
-    inputs.insert("markup".into(), serde_json::json!(markup_text));
-    inputs.insert("tax".into(), serde_json::json!(tax_text));
-    inputs.insert("setup_fee".into(), serde_json::json!(setup_fee_text));
-    inputs.insert("minimum_order".into(), serde_json::json!(minimum_order_text));
+    inputs.insert(
+        "price_value".into(),
+        serde_json::json!(params.price_value_text),
+    );
+    inputs.insert("markup".into(), serde_json::json!(params.markup_text));
+    inputs.insert("tax".into(), serde_json::json!(params.tax_text));
+    inputs.insert("setup_fee".into(), serde_json::json!(params.setup_fee_text));
+    inputs.insert(
+        "minimum_order".into(),
+        serde_json::json!(params.minimum_order_text),
+    );
 
     serde_json::Value::Object(inputs)
 }
@@ -362,8 +375,7 @@ pub fn calculate_sheet(
             InputMode::Psf(psf)
         }
         2 => {
-            let thickness = match parse_finite_f64(app.get_thickness_text().as_ref(), "Thickness")
-            {
+            let thickness = match parse_finite_f64(app.get_thickness_text().as_ref(), "Thickness") {
                 Ok(v) => v,
                 Err(msg) => {
                     set_error(&msg);
@@ -404,25 +416,27 @@ pub fn calculate_sheet(
             st_mut.last_qty = qty;
             drop(st_mut);
 
-            let history_inputs = build_sheet_history_inputs(
+            let table_names = slint_model_to_vec(app.get_table_names());
+            let gauge_keys = slint_model_to_vec(app.get_gauge_keys());
+            let history_inputs = build_sheet_history_inputs(SheetHistoryInputs {
                 width,
                 length,
                 qty,
                 calc_mode,
-                &slint_model_to_vec(app.get_table_names()),
-                &slint_model_to_vec(app.get_gauge_keys()),
-                app.get_selected_table_index(),
-                app.get_gauge_text().as_str(),
-                app.get_selected_gauge_index(),
-                app.get_psf_text().as_str(),
-                app.get_thickness_text().as_str(),
-                app.get_price_mode_index(),
-                app.get_price_value_text().as_str(),
-                app.get_markup_text().as_str(),
-                app.get_tax_text().as_str(),
-                app.get_setup_fee_text().as_str(),
-                app.get_minimum_order_text().as_str(),
-            );
+                table_names: &table_names,
+                gauge_keys: &gauge_keys,
+                selected_table_index: app.get_selected_table_index(),
+                gauge_text: app.get_gauge_text().as_str(),
+                selected_gauge_index: app.get_selected_gauge_index(),
+                psf_text: app.get_psf_text().as_str(),
+                thickness_text: app.get_thickness_text().as_str(),
+                price_mode_index: app.get_price_mode_index(),
+                price_value_text: app.get_price_value_text().as_str(),
+                markup_text: app.get_markup_text().as_str(),
+                tax_text: app.get_tax_text().as_str(),
+                setup_fee_text: app.get_setup_fee_text().as_str(),
+                minimum_order_text: app.get_minimum_order_text().as_str(),
+            });
             let history_outputs = serde_json::json!({
                 "mass_each": result.each_lb,
                 "mass_total": result.total_lb,
@@ -527,9 +541,7 @@ pub fn calculate_pricing(app: &AppWindow, state: &Rc<RefCell<AppState>>) {
             app.set_cost_each_after_tax(format!("${:.2}", result.each_after_tax).into());
             app.set_cost_total_before_tax(format!("${:.2}", result.total_before_tax).into());
             app.set_cost_total_after_tax(format!("${:.2}", result.total_after_tax).into());
-            app.set_cost_minimum_applied(
-                if result.minimum_applied { "Yes" } else { "No" }.into(),
-            );
+            app.set_cost_minimum_applied(if result.minimum_applied { "Yes" } else { "No" }.into());
         }
         Err(e) => {
             set_pricing_error(&e.user_message());
@@ -555,14 +567,14 @@ pub fn calculate_coil(app: &AppWindow, history: &Rc<RefCell<SessionHistory>>) {
         }
     };
 
-    let coil_thickness = match parse_required_f64(app.get_coil_thickness_text().as_str(), "Thickness")
-    {
-        Ok(v) => v,
-        Err(msg) => {
-            set_coil_error(&msg);
-            return;
-        }
-    };
+    let coil_thickness =
+        match parse_required_f64(app.get_coil_thickness_text().as_str(), "Thickness") {
+            Ok(v) => v,
+            Err(msg) => {
+                set_coil_error(&msg);
+                return;
+            }
+        };
 
     let coil_id = match parse_required_f64(app.get_coil_id_text().as_str(), "Inner Diameter") {
         Ok(v) => v,
@@ -685,9 +697,7 @@ pub fn calculate_scrap(app: &AppWindow, history: &Rc<RefCell<SessionHistory>>) {
             app.set_scrap_result_scrap_charge_per_lb(
                 format!("${:.4}", result.scrap_charge_per_lb).into(),
             );
-            app.set_scrap_result_is_pickup(
-                if result.is_pickup { "Yes" } else { "No" }.into(),
-            );
+            app.set_scrap_result_is_pickup(if result.is_pickup { "Yes" } else { "No" }.into());
 
             let hist_inputs = serde_json::json!({
                 "actual_weight": actual_weight,
@@ -943,29 +953,31 @@ pub fn copy_to_ending(app: &AppWindow) {
 
 #[cfg(test)]
 mod tests {
-    use super::build_sheet_history_inputs;
+    use super::{build_sheet_history_inputs, SheetHistoryInputs};
 
     #[test]
     fn sheet_history_inputs_preserve_typed_gauge_and_include_pricing_fields() {
-        let value = build_sheet_history_inputs(
-            48.0,
-            96.0,
-            3,
-            0,
-            &["Galv".to_string()],
-            &["16".to_string(), "18".to_string()],
-            0,
-            "18",
-            0,
-            "",
-            "",
-            2,
-            "125.50",
-            "12",
-            "8.5",
-            "15",
-            "250",
-        );
+        let table_names = ["Galv".to_string()];
+        let gauge_keys = ["16".to_string(), "18".to_string()];
+        let value = build_sheet_history_inputs(SheetHistoryInputs {
+            width: 48.0,
+            length: 96.0,
+            qty: 3,
+            calc_mode: 0,
+            table_names: &table_names,
+            gauge_keys: &gauge_keys,
+            selected_table_index: 0,
+            gauge_text: "18",
+            selected_gauge_index: 0,
+            psf_text: "",
+            thickness_text: "",
+            price_mode_index: 2,
+            price_value_text: "125.50",
+            markup_text: "12",
+            tax_text: "8.5",
+            setup_fee_text: "15",
+            minimum_order_text: "250",
+        });
 
         assert_eq!(value["table"], "Galv");
         assert_eq!(value["gauge"], "18");
